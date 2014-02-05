@@ -1,17 +1,19 @@
 module Parser (
-	FractranProgram(..),
+    FractranProgram(..),
 
-	parseFractran
-	) where
+    parseFractran
+    ) where
 
 
-import Text.Combinators.Parsec
+import Control.Applicative( some )
+import Text.ParserCombinators.Parsec
 
 
 
 data FractranProgram = FractranProgram { fractions :: [(Int,Int)]
                                        , initialValue :: Int }
     deriving (Show)
+
 
 
 
@@ -22,31 +24,42 @@ parseFractran = parse fractran "error"
 
 
 fractran = do
-	f <- many intPair
-	v <- initVal
-	eof
-	return (FractranProgram f v)
+    value <- initVal
+    fractionList <- many intPair
+    whiteSpace
+    eof
+    return (FractranProgram fractionList value)
 
 
 intPair = do
-	whiteSpace
-	n <- wholeNumber
-	slash
-	d <- wholeNumber
-	return (n,d)
+    whiteSpace
+    numerator <- wholeNumber
+    slash
+    denominator <- positiveNumber
+    return (numerator,denominator)
 
 
 slash = char '/'
 
 
 initVal = do
-	whiteSpace
-	v <- wholeNumber
-	whiteSpace
-	return v
+    whiteSpace
+    value <- wholeNumber
+    return value
 
 
-wholeNumber =
+wholeNumber = do
+    value <- some digit
+    return (read value)
+
+
+positiveNumber = do
+    firstDigit <- nonZeroDigit
+    rest <- many digit
+    return (read (firstDigit:rest))
+
+
+nonZeroDigit = oneOf "123456789"
 
 
 whiteSpace = many (oneOf "\t\n\r ")
