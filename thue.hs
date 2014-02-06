@@ -3,8 +3,8 @@ import Text.Combinators.Parsec
 
 
 
-data ThueProgram = ThueProgram { substitutionRules :: [Rule]
-                               , initialState :: State }
+data ThueProgram = ThueProgram { thueRules :: [Rule]
+                               , thueInitialState :: State }
     deriving (Show)
 
 
@@ -25,35 +25,48 @@ parseThue = parse thue "error"
 
 
 thue = do
-	rs <- many ruleLine
+	rs <- many rule
 	separatorLine
-	i <- stateLine
+	i <- initialState
+	eof
 	return (ThueProgram rs i)
 
 
-ruleLine = do
-	r <- rule
-	eol
-	return r
-
-
 rule = do
-	o <- state
+	o <- ruleState
 	separator
 	r <- state
+	eol
 	return (Rule o r)
 
 
-separatorLine = separator >> eol
+separatorLine = whiteSpace >> separator >> whiteSpace >> eol
 separator = string "::="
 
 
-stateLine = do
-	s <- state
-	eol
-	return s
+initialState = do
+	s <- state `sepEndBy` eol
+	return (concat s)
 
 
-state =
+ruleState = many ruleStateChar
+
+
+ruleStateChar  =  noneOf "\n\r:"
+	          <|> try (do { char ':'; notFollowedBy (string ":="); return ':'})
+
+
+state = many stateChar
+
+
+stateChar = noneOf "\n\r"
+
+
+whiteSpace = many (oneOf "\t ")
+
+
+eol  =  try (string "\r\n")
+    <|> try (string "\n\r")
+    <|> try (string "\r")
+    <|> try (string "\n")
 	
-
