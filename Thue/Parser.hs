@@ -1,5 +1,12 @@
+module Parser (
+	ThueProgram(..),
+	Rule(..),
+	State,
 
-import Text.Combinators.Parsec
+	parseThue
+	) where
+
+import Text.ParserCombinators.Parsec
 
 
 
