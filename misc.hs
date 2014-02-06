@@ -38,20 +38,3 @@ isPowerOf x y =
         EQ -> True
         GT -> if (x `modulo` y == 0) then isPowerOf (x `div` y) y else False
 
-
-
-fractran :: [(Int,Int)] -> Int -> [Int]
-fractran program value =
-    let prog = map (\(x,y) -> (fromIntegral x, fromIntegral y)) program
-        f = (\p v -> if (p == [])
-                     then []
-                     else let (curX, curY) = head p
-                              newV = v * curX / curY
-                          in if (isInt newV)
-                             then newV : (f prog newV)
-                             else f (tail p) v)
-        result = map round (f prog (fromIntegral value))
-    in value : result
-
-
-
