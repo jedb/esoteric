@@ -60,7 +60,7 @@ ruleState = many ruleStateChar
 
 
 ruleStateChar  =  noneOf "\n\r:"
-	          <|> try (do { char ':'; notFollowedBy (string ":="); return ':'})
+	          <|> try (char ':' >> notFollowedBy (string ":=") >> return ':')
 
 
 state = many stateChar
