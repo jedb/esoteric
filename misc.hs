@@ -1,11 +1,6 @@
 
 
 
-isInt :: (RealFrac a) => a -> Bool
-isInt x =
-    x == fromInteger (round x)
-
-
 
 modulo :: Int -> Int -> Int
 modulo x y =

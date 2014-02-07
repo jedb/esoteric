@@ -17,7 +17,7 @@ data ThueProgram = ThueProgram { thueRules :: [ThueRule]
 
 data ThueRule = ThueRule { original :: ThueState
                          , replacement :: ThueState }
-    deriving (Show)
+    deriving (Show, Eq)
 
 
 type ThueState = String

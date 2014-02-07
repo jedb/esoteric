@@ -19,5 +19,11 @@ fractran program =
                              then newV : (f prog newV)
                              else f (tail p) v)
         result = map round (f prog (fromIntegral (initialValue program)))
-    in value : result
+    in (initialValue program) : result
+
+
+
+isInt :: (RealFrac a) => a -> Bool
+isInt x =
+    x == fromInteger (round x)
 
