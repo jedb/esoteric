@@ -1,7 +1,7 @@
 module Parser (
 	ThueProgram(..),
-	Rule(..),
-	State,
+	ThueRule(..),
+	ThueState,
 
 	parseThue
 	) where
@@ -10,17 +10,17 @@ import Text.ParserCombinators.Parsec
 
 
 
-data ThueProgram = ThueProgram { thueRules :: [Rule]
-                               , thueInitialState :: State }
+data ThueProgram = ThueProgram { thueRules :: [ThueRule]
+                               , thueInitialState :: ThueState }
     deriving (Show)
 
 
-data Rule = Rule { original :: State
-                 , replacement :: State }
+data ThueRule = ThueRule { original :: ThueState
+                         , replacement :: ThueState }
     deriving (Show)
 
 
-type State = String
+type ThueState = String
 
 
 
@@ -44,7 +44,7 @@ rule = do
 	separator
 	r <- state
 	eol
-	return (Rule o r)
+	return (ThueRule o r)
 
 
 separatorLine = whiteSpace >> separator >> whiteSpace >> eol
