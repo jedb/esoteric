@@ -11,7 +11,7 @@ import Parser
 
 
 
-thue :: ThueProgram -> ThueState
+thue :: ThueProgram -> IO ThueState
 thue program =
     let rules = thueRules program
         state = thueInitialState program
@@ -21,17 +21,23 @@ thue program =
 
 
 
-interpret :: ThueState -> [ThueRule] -> StdGen -> ThueState
-interpret state rules gen =
+interpret :: ThueState -> [ThueRule] -> StdGen -> IO ThueState
+interpret state rules gen = do
     let possibleRules = rules `applicableTo` state
         ruleToApply = possibleRules !! num
 
         (num, gen') = nextInRange 0 (length possibleRules - 1) gen
 
         (before, after) = fromJust (extractInfix (original ruleToApply) state)
-        state' = before ++ (replacement ruleToApply) ++ after
 
-    in if (possibleRules == []) then state else interpret state' rules gen'
+    state' <- case (replacement ruleToApply) of
+                ":::" -> getLine >>= (\x -> return (before ++ x ++ after))
+
+                '~':xs -> putStrLn xs >> return (before ++ after)
+
+                x -> return (before ++ x ++ after)
+
+    if (possibleRules == []) then return state else interpret state' rules gen'
 
 
 
