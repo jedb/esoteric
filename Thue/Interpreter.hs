@@ -33,7 +33,7 @@ interpret state rules gen = do
     state' <- case (replacement ruleToApply) of
                 ":::" -> getLine >>= (\x -> return (before ++ x ++ after))
 
-                '~':xs -> putStrLn xs >> return (before ++ after)
+                '~':xs -> putStr xs >> return (before ++ after)
 
                 x -> return (before ++ x ++ after)
 
