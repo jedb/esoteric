@@ -1,4 +1,4 @@
-module Interpreter (
+module Thue.Interpreter (
     thue,
     extractInfix,
     nextInRange

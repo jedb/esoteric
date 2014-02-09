@@ -1,4 +1,4 @@
-module Interpreter (
+module Fractran.Interpreter (
     fractran
 	) where
 

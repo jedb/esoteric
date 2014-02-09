@@ -1,4 +1,4 @@
-module Parser (
+module Thue.Parser (
 	ThueProgram(..),
 	ThueRule(..),
 	ThueState,

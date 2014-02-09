@@ -1,4 +1,4 @@
-module Example (
+module Fractran.Example (
     addition,
     multiply,
     prime2,

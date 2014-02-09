@@ -1,4 +1,4 @@
-module Parser (
+module Fractran.Parser (
     FractranProgram(..),
 
     parseFractran
