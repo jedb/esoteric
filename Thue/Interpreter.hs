@@ -1,5 +1,7 @@
 module Interpreter (
-    thue
+    thue,
+    extractInfix,
+    nextInRange
     ) where
 
 
