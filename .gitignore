@@ -3,8 +3,3 @@
 
 *.hi
 *.o
-
-
-# ignore any generated binaries
-
-./bin/*
