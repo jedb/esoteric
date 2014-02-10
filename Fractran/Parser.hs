@@ -12,7 +12,7 @@ import Text.ParserCombinators.Parsec
 
 data FractranProgram = FractranProgram { fractions :: [(Int,Int)]
                                        , initialValue :: Int }
-    deriving (Show)
+    deriving (Show, Eq)
 
 
 

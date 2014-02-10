@@ -12,7 +12,7 @@ import Text.ParserCombinators.Parsec
 
 data ThueProgram = ThueProgram { thueRules :: [ThueRule]
                                , thueInitialState :: ThueState }
-    deriving (Show)
+    deriving (Show, Eq)
 
 
 data ThueRule = ThueRule { original :: ThueState
