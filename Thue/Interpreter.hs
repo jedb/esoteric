@@ -8,7 +8,7 @@ module Thue.Interpreter (
 import System.Random
 import Data.Maybe
 import Data.List
-import Parser
+import Thue.Parser
 
 
 

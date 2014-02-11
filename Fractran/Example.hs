@@ -6,7 +6,7 @@ module Fractran.Example (
     prime10) where
 
 
-import Parser
+import Fractran.Parser
 
 
 

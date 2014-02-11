@@ -3,7 +3,7 @@ module Fractran.Interpreter (
 	) where
 
 
-import Parser
+import Fractran.Parser
 
 
 
