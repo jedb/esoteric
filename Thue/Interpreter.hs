@@ -26,7 +26,8 @@ thue program =
 interpret :: ThueState -> [ThueRule] -> StdGen -> IO ThueState
 interpret state rules gen = do
     let possibleRules = rules `applicableTo` state
-        ruleToApply = possibleRules !! num
+        ruleToApply = if (possibleRules == []) then (ThueRule "" "") else possibleRules !! num
+        -- ^ dummy rule if no possible rules apply
 
         (num, gen') = nextInRange 0 (length possibleRules - 1) gen
 
