@@ -24,18 +24,18 @@ parseFractran = parse fractran "error"
 
 
 fractran = do
+    whiteSpace
     value <- initVal
     fractionList <- many intPair
-    whiteSpace
     eof
     return (FractranProgram fractionList value)
 
 
 intPair = do
-    whiteSpace
     numerator <- wholeNumber
     slash
     denominator <- positiveNumber
+    whiteSpace
     return (numerator,denominator)
 
 
@@ -43,8 +43,8 @@ slash = char '/'
 
 
 initVal = do
-    whiteSpace
     value <- wholeNumber
+    whiteSpace
     return value
 
 
