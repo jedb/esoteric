@@ -6,6 +6,7 @@ module Thue.Parser (
 	parseThue
 	) where
 
+import Control.Applicative( some )
 import Text.ParserCombinators.Parsec
 
 
@@ -56,7 +57,7 @@ initialState = do
 	return (concat s)
 
 
-ruleState = many ruleStateChar
+ruleState = some ruleStateChar
 
 
 ruleStateChar  =  noneOf "\n\r:"
