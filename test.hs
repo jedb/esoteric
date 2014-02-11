@@ -23,13 +23,26 @@ fractranParser2 = TestCase (assertEqual ""
 	                                    (Right (FractranProgram [] 2))
 	                                    (parseFractran "\n2"))
 
---fractranParser3 = TestCase (assertEqual ""
---	                                    (Left _)
---	                                    (parseFractran "2/3"))
+fractranParser3 = TestCase (assertEqual ""
+	                                    (Right (FractranProgram [(1,2)] 2))
+	                                    (parseFractran "2 1/2"))
+
+fractranParser4 = TestCase (assertEqual ""
+	                                    (Right (FractranProgram [(2,3)] 3))
+	                                    (parseFractran "3\n \n2/3\n"))
+
+
+
+thueParser0 = TestCase (assertEqual ""
+	                                (Right (ThueProgram [ThueRule "a" "b"] "a"))
+	                                (parseThue "a::=b\n::=\na"))
 
 
 
 main = do
 	putStrLn "Fractran Parser"
-	runTestTT $ TestList [fractranParser0, fractranParser1, fractranParser2]
+	runTestTT $ TestList [fractranParser0, fractranParser1, fractranParser2, fractranParser3, fractranParser4]
+
+	putStrLn "\nThue Parser"
+	runTestTT $ TestList [thueParser0]
 
