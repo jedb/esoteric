@@ -39,7 +39,8 @@ intPair = do
     return (numerator,denominator)
 
 
-slash = char '/'
+slash  =  char '/'
+      <?> "slash character"
 
 
 initVal = do
@@ -59,7 +60,8 @@ positiveNumber = do
     return (read (firstDigit:rest))
 
 
-nonZeroDigit = oneOf "123456789"
+nonZeroDigit  =  oneOf "123456789"
+             <?> "non-zero digit"
 
 
 whiteSpace = many (oneOf "\t\n\r ")

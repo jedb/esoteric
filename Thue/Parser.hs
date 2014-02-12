@@ -49,7 +49,8 @@ rule = do
 
 
 separatorLine = whiteSpace >> separator >> whiteSpace >> eol
-separator = string "::="
+separator  =  string "::="
+          <?> "rule separator"
 
 
 initialState = do
@@ -62,12 +63,14 @@ ruleState = some ruleStateChar
 
 ruleStateChar  =  noneOf "\n\r:"
 	          <|> try (char ':' >> notFollowedBy (string ":=") >> return ':')
+	          <?> "state character"
 
 
 state = many stateChar
 
 
-stateChar = noneOf "\n\r"
+stateChar  =  noneOf "\n\r"
+          <?> "state character"
 
 
 whiteSpace = many (oneOf "\t ")
@@ -77,4 +80,5 @@ eol  =  try (string "\r\n")
     <|> try (string "\n\r")
     <|> try (string "\r")
     <|> try (string "\n")
+    <?> "end of line"
 	
