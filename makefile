@@ -1,10 +1,12 @@
 
-OUTPUTDIR = ./bin
+OUTPUTDIR = bin
 
-EXECUTABLES = ${OUTPUTDIR}/test
+EXECUTABLES = ${OUTPUTDIR}/test ${OUTPUTDIR}/fractran ${OUTPUTDIR}/thue
 
 
-all: test
+
+all: testprog fractranprog thueprog
+
 
 clean:
 	find . -name '*.hi' -delete
@@ -14,6 +16,13 @@ distclean:
 	rm ${EXECUTABLES}
 
 
-test:
-	ghc --make ./test.hs -o ${OUTPUTDIR}/test
+
+testprog:
+	ghc --make test.hs -o ${OUTPUTDIR}/test
+
+fractranprog:
+	ghc -XDeriveDataTypeable --make fractran.hs -o ${OUTPUTDIR}/fractran
+
+thueprog:
+	ghc -XDeriveDataTypeable --make thue.hs -o ${OUTPUTDIR}/thue
 
