@@ -1,15 +1,10 @@
 
 import System.Environment( getArgs )
 import Data.Typeable
-import qualified Control.Exception
+import Control.Exception( ErrorCall(..), Handler(..), catches )
 import Thue.Parser
 import Thue.Interpreter
 
-
-data ThueException = ThueException { errString :: String }
-    deriving (Show, Typeable)
-
-instance Control.Exception.Exception ThueException
 
 
 
@@ -22,7 +17,7 @@ program :: IO ()
 program = do
 	args <- getArgs
 	fileContents <- if (length args /= 1)
-		            then Control.Exception.throw (ThueException usageString)
+		            then error usageString
 		            else readFile (head args)
 
 	case (parseThue fileContents) of
@@ -31,8 +26,6 @@ program = do
 
 
 
-main = Control.Exception.catch program handler
-        where
-        	handler :: ThueException -> IO ()
-        	handler err = putStrLn (errString err)
+main = catches program
+               [ Handler ((\e -> putStrLn . show $ e) :: ErrorCall -> IO ()) ]
 

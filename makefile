@@ -21,8 +21,8 @@ testprog:
 	ghc --make test.hs -o ${OUTPUTDIR}/test
 
 fractranprog:
-	ghc -XDeriveDataTypeable --make fractran.hs -o ${OUTPUTDIR}/fractran
+	ghc --make fractran.hs -o ${OUTPUTDIR}/fractran
 
 thueprog:
-	ghc -XDeriveDataTypeable --make thue.hs -o ${OUTPUTDIR}/thue
+	ghc --make thue.hs -o ${OUTPUTDIR}/thue
 

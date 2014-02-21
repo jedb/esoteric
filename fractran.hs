@@ -1,15 +1,10 @@
 
 import System.Environment( getArgs )
 import Data.Typeable
-import qualified Control.Exception
+import Control.Exception( ErrorCall(..), Handler(..), catches )
 import Fractran.Parser
 import Fractran.Interpreter
 
-
-data FractranException = FractranException { errString :: String }
-    deriving (Show, Typeable)
-
-instance Control.Exception.Exception FractranException
 
 
 
@@ -22,7 +17,7 @@ program :: IO ()
 program = do
 	args <- getArgs
 	fileContents <- if (length args /= 1)
-		            then Control.Exception.throw (FractranException usageString)
+		            then error usageString
 		            else readFile (head args)
 
 	case (parseFractran fileContents) of
@@ -31,8 +26,6 @@ program = do
 
 
 
-main = Control.Exception.catch program handler
-        where
-        	handler :: FractranException -> IO ()
-        	handler err = putStrLn (errString err)
+main = catches program
+               [ Handler ((\e -> putStrLn . show $ e) :: ErrorCall -> IO ()) ]
 
