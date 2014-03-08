@@ -10,10 +10,17 @@ import Text.ParserCombinators.Parsec
 
 
 
-data UnlambdaTerm = S | K | I | V | R | D | C
+data UnlambdaTerm = S | K | I | V | R | D | C | E | Bar | Reed
                   | Dot { cha :: Char }
+                  | Compare { cha :: Char }
 	              | App { func :: UnlambdaTerm
                         , arg :: UnlambdaTerm }
+                  | Kpartial { constant :: UnlambdaTerm }
+                  | Spartial { func1 :: UnlambdaTerm }
+                  | Sapp { func1 :: UnlambdaTerm
+                         , func2 :: UnlambdaTerm }
+                  | Continuation { arg :: UnlambdaTerm }
+                  | Promise { arg :: UnlambdaTerm }
     deriving (Eq, Show)
 
 
@@ -24,6 +31,11 @@ parseUnlambda = parse unlambda "error"
 
 
 
+parseUnlambda1 :: String -> Either ParseError UnlambdaTerm
+parseUnlambda1 = parse unlambda1 "error"
+
+
+
 unlambda = do
 	whiteSpace
 	t <- term
@@ -31,16 +43,31 @@ unlambda = do
 	return t
 
 
-term  =  (try app)
-     <|> (try s)
-     <|> (try k)
-     <|> (try i)
-     <|> (try v)
-     <|> (try r)
-     <|> (try d)
-     <|> (try c)
-     <|> (try dot)
+unlambda1 = do
+	whiteSpace
+	t <- term1
+	eof
+	return t
+
+
+term  =  (try term1)
+     <|> (try e)
+     <|> (try reed)
+     <|> (try comp)
+     <|> (try bar)
      <?> "unlambda term"
+
+
+term1  =  (try app)
+      <|> (try s)
+      <|> (try k)
+      <|> (try i)
+      <|> (try v)
+      <|> (try r)
+      <|> (try d)
+      <|> (try c)
+      <|> (try dot)
+      <?> "unlambda term"
 
 
 app = do
@@ -58,6 +85,16 @@ v = char 'v' >> whiteSpace >> return V
 r = char 'r' >> whiteSpace >> return R
 d = char 'd' >> whiteSpace >> return D
 c = char 'c' >> whiteSpace >> return C
+e = char 'e' >> whiteSpace >> return E
+reed = char '@' >> whiteSpace >> return Reed
+bar = char '|' >> whiteSpace >> return Bar
+
+
+comp = do
+	char '?'
+	c <- noneOf("")
+	whiteSpace
+	return (Compare c)
 
 
 dot = do
