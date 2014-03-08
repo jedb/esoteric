@@ -6,6 +6,7 @@ module Unlambda.Parser (
 
 
 import Control.Applicative( some )
+import Data.Either
 import Text.ParserCombinators.Parsec
 
 
@@ -27,13 +28,37 @@ data UnlambdaTerm = S | K | I | V | R | D | C | E | Bar | Reed
 
 
 parseUnlambda :: String -> Either ParseError UnlambdaTerm
-parseUnlambda = parse unlambda "error"
+parseUnlambda input = 
+	let firstPass = parse removeComments "error" input
+	in case firstPass of
+		Left e -> Left e
+		Right o -> parse unlambda "error" o
 
 
 
 parseUnlambda1 :: String -> Either ParseError UnlambdaTerm
-parseUnlambda1 = parse unlambda1 "error"
+parseUnlambda1 input =
+	let firstPass = parse removeComments "error" input
+	in case firstPass of
+		Left e -> Left e
+		Right o -> parse unlambda1 "error" o
 
+
+
+removeComments = uline `sepEndBy` eol >>= (return . concat)
+
+
+uline = do
+	l <- many (noneOf "#\r\n")
+	optional (char '#' >> many (noneOf "\r\n"))
+	return l
+
+
+eol  =  try (string "\r\n")
+    <|> try (string "\n\r")
+    <|> try (string "\r")
+    <|> try (string "\n")
+    <?> "end of line"
 
 
 unlambda = do
@@ -92,14 +117,14 @@ bar = char '|' >> whiteSpace >> return Bar
 
 comp = do
 	char '?'
-	c <- noneOf("")
+	c <- anyChar
 	whiteSpace
 	return (Compare c)
 
 
 dot = do
 	char '.'
-	c <- noneOf("")
+	c <- anyChar
 	whiteSpace
 	return (Dot c)
 
