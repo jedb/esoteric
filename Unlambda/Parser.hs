@@ -50,7 +50,7 @@ removeComments = uline `sepEndBy` eol >>= (return . concat)
 
 
 uline = do
-	l <- many builtin
+	l <- many (builtin <|> (oneOf " \t" >>= return . (:[])))
 	optional (char '#' >> many (noneOf "\r\n"))
 	return . concat $ l
 
