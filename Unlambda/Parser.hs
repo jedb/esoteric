@@ -50,9 +50,15 @@ removeComments = uline `sepEndBy` eol >>= (return . concat)
 
 
 uline = do
-	l <- many (noneOf "#\r\n")
+	l <- many builtin
 	optional (char '#' >> many (noneOf "\r\n"))
-	return l
+	return . concat $ l
+
+
+builtin  =  (oneOf "`skivrdce|@" >>= return . (:[]))
+        <|> (char '.' >> anyChar >>= return . ('.':) . (:[]))
+        <|> (char '?' >> anyChar >>= return . ('?':) . (:[]))
+        <?> "unlambda builtin function"
 
 
 eol  =  try (string "\r\n")
