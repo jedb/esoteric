@@ -1,8 +1,8 @@
 module Unlambda.Parser (
     UnlambdaTerm(..),
 
-	parseUnlambda,
-	parseUnlambda1
+    parseUnlambda,
+    parseUnlambda1
     ) where
 
 
@@ -13,16 +13,14 @@ import Text.ParserCombinators.Parsec
 
 
 data UnlambdaTerm = S | K | I | V | R | D | C | E | Bar | Reed
-                  | Dot { cha :: Char }
-                  | Compare { cha :: Char }
-	              | App { func :: UnlambdaTerm
-                        , arg :: UnlambdaTerm }
-                  | Kpartial { constant :: UnlambdaTerm }
-                  | Spartial { func1 :: UnlambdaTerm }
-                  | Sapp { func1 :: UnlambdaTerm
-                         , func2 :: UnlambdaTerm }
-                  | Continuation { arg :: UnlambdaTerm }
-                  | Promise { arg :: UnlambdaTerm }
+                  | Dot Char
+                  | Compare Char
+                  | App UnlambdaTerm UnlambdaTerm
+                  | Kpartial UnlambdaTerm
+                  | Spartial UnlambdaTerm
+                  | Sapp UnlambdaTerm UnlambdaTerm
+                  | Continuation UnlambdaTerm
+                  | Promise UnlambdaTerm
     deriving (Eq, Show)
 
 
@@ -30,19 +28,19 @@ data UnlambdaTerm = S | K | I | V | R | D | C | E | Bar | Reed
 
 parseUnlambda :: String -> Either ParseError UnlambdaTerm
 parseUnlambda input = 
-	let firstPass = parse removeComments "error" input
-	in case firstPass of
-		Left e -> Left e
-		Right o -> parse unlambda "error" o
+    let firstPass = parse removeComments "error" input
+    in case firstPass of
+        Left e -> Left e
+        Right o -> parse unlambda "error" o
 
 
 
 parseUnlambda1 :: String -> Either ParseError UnlambdaTerm
 parseUnlambda1 input =
-	let firstPass = parse removeComments "error" input
-	in case firstPass of
-		Left e -> Left e
-		Right o -> parse unlambda1 "error" o
+    let firstPass = parse removeComments "error" input
+    in case firstPass of
+        Left e -> Left e
+        Right o -> parse unlambda1 "error" o
 
 
 
@@ -50,9 +48,9 @@ removeComments = uline `sepEndBy` eol >>= (return . concat)
 
 
 uline = do
-	l <- many (builtin <|> (oneOf " \t" >>= return . (:[])))
-	optional (char '#' >> many (noneOf "\r\n"))
-	return . concat $ l
+    l <- many (builtin <|> (oneOf " \t" >>= return . (:[])))
+    optional (char '#' >> many (noneOf "\r\n"))
+    return . concat $ l
 
 
 builtin  =  (oneOf "`skivrdce|@" >>= return . (:[]))
@@ -69,17 +67,17 @@ eol  =  try (string "\r\n")
 
 
 unlambda = do
-	whiteSpace
-	t <- term
-	eof
-	return t
+    whiteSpace
+    t <- term
+    eof
+    return t
 
 
 unlambda1 = do
-	whiteSpace
-	t <- term1
-	eof
-	return t
+    whiteSpace
+    t <- term1
+    eof
+    return t
 
 
 term  =  (try term1)
@@ -103,11 +101,11 @@ term1  =  (try app)
 
 
 app = do
-	char '`'
-	whiteSpace
-	f <- term
-	x <- term
-	return (App f x)
+    char '`'
+    whiteSpace
+    f <- term
+    x <- term
+    return (App f x)
 
 
 s = char 's' >> whiteSpace >> return S
@@ -123,17 +121,17 @@ bar = char '|' >> whiteSpace >> return Bar
 
 
 comp = do
-	char '?'
-	c <- anyChar
-	whiteSpace
-	return (Compare c)
+    char '?'
+    c <- anyChar
+    whiteSpace
+    return (Compare c)
 
 
 dot = do
-	char '.'
-	c <- anyChar
-	whiteSpace
-	return (Dot c)
+    char '.'
+    c <- anyChar
+    whiteSpace
+    return (Dot c)
 
 
 whiteSpace = many (oneOf "\t\n\r ")
