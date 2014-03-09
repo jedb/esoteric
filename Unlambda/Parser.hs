@@ -1,7 +1,8 @@
 module Unlambda.Parser (
     UnlambdaTerm(..),
 
-	parseUnlambda
+	parseUnlambda,
+	parseUnlambda1
     ) where
 
 
