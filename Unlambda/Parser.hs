@@ -19,9 +19,28 @@ data UnlambdaTerm = S | K | I | V | R | D | C | E | Bar | Reed
                   | Kpartial UnlambdaTerm
                   | Spartial UnlambdaTerm
                   | Sapp UnlambdaTerm UnlambdaTerm
-                  | Continuation UnlambdaTerm
                   | Promise UnlambdaTerm
-    deriving (Eq, Show)
+    deriving (Eq)
+
+
+instance Show UnlambdaTerm where
+    show S = "s"
+    show K = "k"
+    show I = "i"
+    show V = "v"
+    show R = "r"
+    show D = "d"
+    show C = "c"
+    show E = "e"
+    show Bar = "|"
+    show Reed = "@"
+    show (Dot x) = ['.', x]
+    show (Compare x) = ['?', x]
+    show (App x y) = "`" ++ (show x) ++ (show y)
+    show (Kpartial x) = "`k" ++ (show x)
+    show (Spartial x) = "`s" ++ (show x)
+    show (Sapp x y) = "``s" ++ (show x) ++ (show y)
+    show (Promise x) = "`d" ++ (show x)
 
 
 

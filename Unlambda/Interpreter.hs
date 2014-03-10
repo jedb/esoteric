@@ -77,5 +77,3 @@ apply firstTerm secondTerm =
 
         Compare c -> return I --placeholder
 
-        Continuation cont -> return I --placeholder
-
