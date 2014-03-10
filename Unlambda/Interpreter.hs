@@ -3,13 +3,24 @@ module Unlambda.Interpreter (
     ) where
 
 
+import Control.Exception( Exception(..), Handler(..), throw, catches )
+import Data.Typeable
 import Unlambda.Parser
+
+
+
+data UnlambdaException = UnlambdaException { endTerm :: UnlambdaTerm }
+    deriving (Show, Typeable)
+
+instance Control.Exception.Exception UnlambdaException
 
 
 
 
 unlambda :: UnlambdaTerm -> IO UnlambdaTerm
-unlambda term = eval term
+unlambda term = 
+    catches (eval term)
+            [ Handler ((\e -> return (endTerm e)) :: UnlambdaException -> IO UnlambdaTerm) ]
 
 
 
@@ -56,7 +67,9 @@ apply firstTerm secondTerm =
 
         R -> putChar '\n' >> eval secondTerm
 
-        E -> return I --placeholder
+        E -> do
+            t <- eval secondTerm
+            throw (UnlambdaException t)
 
         Reed -> return I --placeholder
 
