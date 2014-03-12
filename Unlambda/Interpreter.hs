@@ -5,6 +5,8 @@ module Unlambda.Interpreter (
 
 import System.IO.Error
 import Control.Exception( Exception(..), Handler(..), throw, catches )
+import Control.Monad.Trans.Cont
+import Control.Monad.IO.Class
 import Data.Typeable
 import Unlambda.Parser
 
@@ -19,75 +21,83 @@ instance Control.Exception.Exception UnlambdaException
 
 
 unlambda :: UnlambdaTerm -> IO UnlambdaTerm
-unlambda term = 
-    catches (eval Nothing term)
+unlambda term =
+    catches ((`runContT` return) $ eval term)
             [ Handler ((\e -> return (endTerm e)) :: UnlambdaException -> IO UnlambdaTerm) ]
 
 
 
-eval :: Maybe Char -> UnlambdaTerm -> IO UnlambdaTerm
-eval ch term =
+eval :: UnlambdaTerm -> ContT UnlambdaTerm IO UnlambdaTerm
+eval term =
     case term of
         App f x -> do
-            t <- eval ch f
-            apply ch t x
+            t <- eval f
+            apply t x
         _ -> return term
 
 
 
-apply :: Maybe Char -> UnlambdaTerm -> UnlambdaTerm -> IO UnlambdaTerm
-apply ch firstTerm secondTerm =
+apply :: UnlambdaTerm -> UnlambdaTerm -> ContT UnlambdaTerm IO UnlambdaTerm
+apply firstTerm secondTerm =
     case firstTerm of
-        K -> eval ch secondTerm >>= return . Kpartial
+        K -> eval secondTerm >>= return . Kpartial
 
-        Kpartial x -> eval ch secondTerm >> return x
+        Kpartial x -> eval secondTerm >> return x
 
-        S -> eval ch secondTerm >>= return . Spartial
+        S -> eval secondTerm >>= return . Spartial
 
-        Spartial x -> eval ch secondTerm >>= return . (Sapp x)
+        Spartial x -> eval secondTerm >>= return . (Sapp x)
 
         Sapp x y -> do
-            z <- eval ch secondTerm
-            result <- eval ch (App (App x z) (App y z))
+            z <- eval secondTerm
+            result <- eval (App (App x z) (App y z))
             return result
 
-        I -> eval ch secondTerm
+        I -> eval secondTerm
 
-        V -> eval ch secondTerm >> return V
+        V -> eval secondTerm >> return V
 
-        C -> return I --placeholder
+        C -> callCC $ \cont -> eval (App secondTerm (Continuation cont))
+
+        Continuation cont -> eval secondTerm >>= cont
 
         D -> return (Promise secondTerm)
 
         Promise x -> do
-            y <- eval ch secondTerm
-            result <- eval ch (App x y)
+            y <- eval secondTerm
+            result <- eval (App x y)
             return result
 
-        Dot c -> putChar c >> eval ch secondTerm
+        Dot c -> do
+            t <- eval secondTerm
+            liftIO (putChar c)
+            return t
 
-        R -> putChar '\n' >> eval ch secondTerm
+        R -> do
+            t <- eval secondTerm
+            liftIO (putChar '\n')
+            return t
 
         E -> do
-            t <- eval ch secondTerm
+            t <- eval secondTerm
             throw (UnlambdaException t)
 
-        Reed -> do
-            t <- eval ch secondTerm
-            catchIOError (do
-                ch' <- getChar
-                eval (Just ch') (App t I)
-                ) (\e -> eval Nothing (App t V))
+        Reed -> return I --do
+            --t <- eval ch secondTerm
+            --catchIOError (do
+            --    ch' <- getChar
+            --    eval (Just ch') (App t I)
+            --    ) (\e -> eval Nothing (App t V))
 
-        Bar -> do
-            t <- eval ch secondTerm
-            case ch of
-                Just x -> eval ch (App t (Dot x))
-                Nothing -> eval ch (App t V)
+        Bar -> return I --do
+            --t <- eval ch secondTerm
+            --case ch of
+            --    Just x -> eval ch (App t (Dot x))
+            --    Nothing -> eval ch (App t V)
 
-        Compare c -> do
-            t <- eval ch secondTerm
-            case (ch == Just c) of
-                True -> eval ch (App t I)
-                False -> eval ch (App t V)
+        Compare c -> return I --do
+            --t <- eval ch secondTerm
+            --case (ch == Just c) of
+            --    True -> eval ch (App t I)
+            --    False -> eval ch (App t V)
 

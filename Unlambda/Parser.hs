@@ -7,6 +7,8 @@ module Unlambda.Parser (
 
 
 import Control.Applicative( some )
+import Control.Monad.Trans.Cont
+import Control.Monad.IO.Class
 import Data.Either
 import Text.ParserCombinators.Parsec
 
@@ -20,7 +22,28 @@ data UnlambdaTerm = S | K | I | V | R | D | C | E | Bar | Reed
                   | Spartial UnlambdaTerm
                   | Sapp UnlambdaTerm UnlambdaTerm
                   | Promise UnlambdaTerm
-    deriving (Eq)
+                  | Continuation (UnlambdaTerm -> ContT UnlambdaTerm IO UnlambdaTerm)
+
+
+instance Eq UnlambdaTerm where
+    S == S   =   True
+    K == K   =   True
+    I == I   =   True
+    V == V   =   True
+    R == R   =   True
+    D == D   =   True
+    C == C   =   True
+    E == E   =   True
+    Bar == Bar   =   True
+    Reed == Reed   =   True
+    Dot x == Dot y   =   x == y
+    Compare x == Compare y   =   x == y
+    App a b == App x y   =   a == x && b == y
+    Kpartial x == Kpartial y   =   x == y
+    Spartial x == Spartial y   =   x == y
+    Sapp a b == Sapp x y   =   a == x && b == y
+    Promise x == Promise y   =   x == y
+    _ == _   =   False
 
 
 instance Show UnlambdaTerm where
@@ -41,6 +64,7 @@ instance Show UnlambdaTerm where
     show (Spartial x) = "`s" ++ (show x)
     show (Sapp x y) = "``s" ++ (show x) ++ (show y)
     show (Promise x) = "`d" ++ (show x)
+    show (Continuation _) = "<cont>"
 
 
 
