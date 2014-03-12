@@ -50,8 +50,7 @@ apply firstTerm secondTerm =
 
         Sapp x y -> do
             z <- eval secondTerm
-            result <- eval (App (App x z) (App y z))
-            return result
+            eval (App (App x z) (App y z))
 
         I -> eval secondTerm
 
@@ -63,10 +62,7 @@ apply firstTerm secondTerm =
 
         D -> return (Promise secondTerm)
 
-        Promise x -> do
-            y <- eval secondTerm
-            result <- eval (App x y)
-            return result
+        Promise x -> eval secondTerm >>= eval . (App x)
 
         Dot c -> do
             t <- eval secondTerm
@@ -78,9 +74,7 @@ apply firstTerm secondTerm =
             liftIO (putChar '\n')
             return t
 
-        E -> do
-            t <- eval secondTerm
-            throw (UnlambdaException t)
+        E -> eval secondTerm >>= throw . UnlambdaException
 
         Reed -> return I --do
             --t <- eval ch secondTerm
