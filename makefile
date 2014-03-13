@@ -1,11 +1,11 @@
 
 OUTPUTDIR = bin
 
-EXECUTABLES = ${OUTPUTDIR}/test ${OUTPUTDIR}/fractran ${OUTPUTDIR}/thue
+EXECUTABLES = ${OUTPUTDIR}/test ${OUTPUTDIR}/fractran ${OUTPUTDIR}/thue ${OUTPUTDIR}/unlambda
 
 
 
-all: testprog fractranprog thueprog
+all: testprog fractranprog thueprog unlambdaprog
 
 
 clean:
@@ -25,4 +25,7 @@ fractranprog:
 
 thueprog:
 	ghc --make thue.hs -o ${OUTPUTDIR}/thue
+
+unlambdaprog:
+	ghc -XDeriveDataTypeable --make unlambda.hs -o ${OUTPUTDIR}/unlambda
 
