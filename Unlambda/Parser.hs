@@ -15,11 +15,7 @@ import Text.ParserCombinators.Parsec
 
 
 
-type ULM a = ContT UnlambdaTerm (StateT UnlambdaState IO) a
-
-data UnlambdaState = UnlambdaState { exit :: UnlambdaTerm -> ULM UnlambdaTerm
-                                   , curChar :: Maybe Char }
-
+type ULM a = ContT UnlambdaTerm (StateT (Maybe Char) IO) a
 
 
 data UnlambdaTerm = S | K | I | V | R | D | C | E | Bar | Reed

@@ -4,60 +4,40 @@ module Unlambda.Interpreter (
 
 
 import System.IO.Error
+import Control.Exception( Exception(..), Handler(..), throw, catches )
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Cont
 import Control.Monad.Trans.State.Lazy
 import Control.Monad.IO.Class
+import Data.Typeable
+import Data.Maybe
 import Unlambda.Parser
 
 
 
-type ULM a = ContT UnlambdaTerm (StateT UnlambdaState IO) a
+type ULM a = ContT UnlambdaTerm (StateT (Maybe Char) IO) a
 
-data UnlambdaState = UnlambdaState { exit :: UnlambdaTerm -> ULM UnlambdaTerm
-                                   , curChar :: Maybe Char }
 
+data UnlambdaException = UnlambdaException { exitValue :: UnlambdaTerm }
+    deriving (Show, Typeable)
+
+instance Exception UnlambdaException
 
 
 
 unlambda :: UnlambdaTerm -> IO UnlambdaTerm
-unlambda term = (`getResult` return) (callCC $ \cont -> setExit cont >> setCurChar Nothing >> eval term)
-
-
-
-getResult :: (Monad m) => ULM a -> (a -> m a) -> m a
-getResult m f = f . runStateT . runContT $ m
-
-
-
-setExit :: (UnlambdaTerm -> ULM UnlambdaTerm) -> ULM ()
-setExit cont = do
-    state <- lift get
-    (lift put) (state { exit = cont })
-    return
-
-
-
-doExit :: UnlambdaTerm -> ULM UnlambdaTerm
-doExit term = do
-    state <- lift get
-    (exit state) term
-    return
+unlambda term = catches ((`evalStateT` Nothing) . (`runContT` return) $ eval term)
+                        [ Handler ((\e -> return . exitValue $ e) :: UnlambdaException -> IO UnlambdaTerm) ]
 
 
 
 setCurChar :: Maybe Char -> ULM ()
-setCurChar ch = do
-    state <- lift get
-    (lift put) (state { curChar = ch })
-    return
+setCurChar x = lift (put x)
 
 
 
 getCurChar :: ULM (Maybe Char)
-getCurChar = do
-    state <- lift get
-    return (curChar state)
+getCurChar = lift (get)
 
 
 
@@ -108,24 +88,21 @@ apply firstTerm secondTerm =
             liftIO (putChar '\n')
             return t
 
-        E -> eval secondTerm >>= doExit
+        E -> eval secondTerm >>= throw . UnlambdaException
 
-        Reed -> return I --do
-            --t <- eval ch secondTerm
-            --catchIOError (do
-            --    ch' <- getChar
-            --    eval (Just ch') (App t I)
-            --    ) (\e -> eval Nothing (App t V))
+        Reed -> do
+            t <- eval secondTerm
+            ch <- liftIO (catchIOError (getChar >>= return . Just) (\e -> return Nothing))
+            setCurChar ch
+            if (isNothing ch) then eval (App t V) else eval (App t I)
 
-        Bar -> return I --do
-            --t <- eval ch secondTerm
-            --case ch of
-            --    Just x -> eval ch (App t (Dot x))
-            --    Nothing -> eval ch (App t V)
+        Bar -> do
+            t <- eval secondTerm
+            ch <- getCurChar
+            if (isNothing ch) then eval (App t V) else eval (App t I)
 
-        Compare c -> return I --do
-            --t <- eval ch secondTerm
-            --case (ch == Just c) of
-            --    True -> eval ch (App t I)
-            --    False -> eval ch (App t V)
+        Compare c -> do
+            t <- eval secondTerm
+            ch <- getCurChar
+            if (ch /= Just c) then eval (App t V) else eval (App t I)
 
