@@ -1,6 +1,5 @@
 
 import System.Environment( getArgs )
-import Data.Typeable
 import Control.Exception( ErrorCall(..), Handler(..), catches )
 import Thue.Parser
 import Thue.Interpreter
