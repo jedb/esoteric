@@ -4,30 +4,64 @@ module Unlambda.Interpreter (
 
 
 import System.IO.Error
-import Control.Exception( Exception(..), Handler(..), throw, catches )
+import Control.Monad.Trans.Class
 import Control.Monad.Trans.Cont
+import Control.Monad.Trans.State.Lazy
 import Control.Monad.IO.Class
-import Data.Typeable
 import Unlambda.Parser
 
 
 
-data UnlambdaException = UnlambdaException { endTerm :: UnlambdaTerm }
-    deriving (Show, Typeable)
+type ULM a = ContT UnlambdaTerm (StateT UnlambdaState IO) a
 
-instance Control.Exception.Exception UnlambdaException
+data UnlambdaState = UnlambdaState { exit :: UnlambdaTerm -> ULM UnlambdaTerm
+                                   , curChar :: Maybe Char }
 
 
 
 
 unlambda :: UnlambdaTerm -> IO UnlambdaTerm
-unlambda term =
-    catches ((`runContT` return) $ eval term)
-            [ Handler ((\e -> return (endTerm e)) :: UnlambdaException -> IO UnlambdaTerm) ]
+unlambda term = (`getResult` return) (callCC $ \cont -> setExit cont >> setCurChar Nothing >> eval term)
 
 
 
-eval :: UnlambdaTerm -> ContT UnlambdaTerm IO UnlambdaTerm
+getResult :: (Monad m) => ULM a -> (a -> m a) -> m a
+getResult m f = f . runStateT . runContT $ m
+
+
+
+setExit :: (UnlambdaTerm -> ULM UnlambdaTerm) -> ULM ()
+setExit cont = do
+    state <- lift get
+    (lift put) (state { exit = cont })
+    return
+
+
+
+doExit :: UnlambdaTerm -> ULM UnlambdaTerm
+doExit term = do
+    state <- lift get
+    (exit state) term
+    return
+
+
+
+setCurChar :: Maybe Char -> ULM ()
+setCurChar ch = do
+    state <- lift get
+    (lift put) (state { curChar = ch })
+    return
+
+
+
+getCurChar :: ULM (Maybe Char)
+getCurChar = do
+    state <- lift get
+    return (curChar state)
+
+
+
+eval :: UnlambdaTerm -> ULM UnlambdaTerm
 eval term =
     case term of
         App f x -> do
@@ -37,7 +71,7 @@ eval term =
 
 
 
-apply :: UnlambdaTerm -> UnlambdaTerm -> ContT UnlambdaTerm IO UnlambdaTerm
+apply :: UnlambdaTerm -> UnlambdaTerm -> ULM UnlambdaTerm
 apply firstTerm secondTerm =
     case firstTerm of
         K -> eval secondTerm >>= return . Kpartial
@@ -74,7 +108,7 @@ apply firstTerm secondTerm =
             liftIO (putChar '\n')
             return t
 
-        E -> eval secondTerm >>= throw . UnlambdaException
+        E -> eval secondTerm >>= doExit
 
         Reed -> return I --do
             --t <- eval ch secondTerm

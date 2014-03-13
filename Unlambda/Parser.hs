@@ -9,8 +9,16 @@ module Unlambda.Parser (
 import Control.Applicative( some )
 import Control.Monad.Trans.Cont
 import Control.Monad.IO.Class
+import Control.Monad.Trans.State.Lazy
 import Data.Either
 import Text.ParserCombinators.Parsec
+
+
+
+type ULM a = ContT UnlambdaTerm (StateT UnlambdaState IO) a
+
+data UnlambdaState = UnlambdaState { exit :: UnlambdaTerm -> ULM UnlambdaTerm
+                                   , curChar :: Maybe Char }
 
 
 
@@ -22,7 +30,7 @@ data UnlambdaTerm = S | K | I | V | R | D | C | E | Bar | Reed
                   | Spartial UnlambdaTerm
                   | Sapp UnlambdaTerm UnlambdaTerm
                   | Promise UnlambdaTerm
-                  | Continuation (UnlambdaTerm -> ContT UnlambdaTerm IO UnlambdaTerm)
+                  | Continuation (UnlambdaTerm -> ULM UnlambdaTerm)
 
 
 instance Eq UnlambdaTerm where
