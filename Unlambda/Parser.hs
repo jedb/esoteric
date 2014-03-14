@@ -7,7 +7,7 @@ module Unlambda.Parser (
 import Control.Applicative( some )
 import Data.Either
 import Text.ParserCombinators.Parsec
-import Unlambda.Monad
+import Unlambda.Types
 
 
 

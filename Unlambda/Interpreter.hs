@@ -8,7 +8,7 @@ import Control.Monad.Trans.Cont
 import Control.Monad.IO.Class
 import Data.Maybe
 import Unlambda.Parser
-import Unlambda.Monad
+import Unlambda.Types
 
 
 

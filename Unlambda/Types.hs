@@ -1,4 +1,4 @@
-module Unlambda.Monad (
+module Unlambda.Types (
 	ULM,
 	UnlambdaTerm(..),
 
