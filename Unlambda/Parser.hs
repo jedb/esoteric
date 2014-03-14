@@ -1,74 +1,13 @@
 module Unlambda.Parser (
-    UnlambdaTerm(..),
-
     parseUnlambda,
     parseUnlambda1
     ) where
 
 
 import Control.Applicative( some )
-import Control.Monad.Trans.Cont
-import Control.Monad.IO.Class
-import Control.Monad.Trans.State.Lazy
 import Data.Either
 import Text.ParserCombinators.Parsec
-
-
-
-type ULM a = ContT UnlambdaTerm (StateT (Maybe Char) IO) a
-
-
-data UnlambdaTerm = S | K | I | V | R | D | C | E | Bar | Reed
-                  | Dot Char
-                  | Compare Char
-                  | App UnlambdaTerm UnlambdaTerm
-                  | Kpartial UnlambdaTerm
-                  | Spartial UnlambdaTerm
-                  | Sapp UnlambdaTerm UnlambdaTerm
-                  | Promise UnlambdaTerm
-                  | Continuation (UnlambdaTerm -> ULM UnlambdaTerm)
-
-
-instance Eq UnlambdaTerm where
-    S == S   =   True
-    K == K   =   True
-    I == I   =   True
-    V == V   =   True
-    R == R   =   True
-    D == D   =   True
-    C == C   =   True
-    E == E   =   True
-    Bar == Bar   =   True
-    Reed == Reed   =   True
-    Dot x == Dot y   =   x == y
-    Compare x == Compare y   =   x == y
-    App a b == App x y   =   a == x && b == y
-    Kpartial x == Kpartial y   =   x == y
-    Spartial x == Spartial y   =   x == y
-    Sapp a b == Sapp x y   =   a == x && b == y
-    Promise x == Promise y   =   x == y
-    _ == _   =   False
-
-
-instance Show UnlambdaTerm where
-    show S = "s"
-    show K = "k"
-    show I = "i"
-    show V = "v"
-    show R = "r"
-    show D = "d"
-    show C = "c"
-    show E = "e"
-    show Bar = "|"
-    show Reed = "@"
-    show (Dot x) = ['.', x]
-    show (Compare x) = ['?', x]
-    show (App x y) = "`" ++ (show x) ++ (show y)
-    show (Kpartial x) = "`k" ++ (show x)
-    show (Spartial x) = "`s" ++ (show x)
-    show (Sapp x y) = "``s" ++ (show x) ++ (show y)
-    show (Promise x) = "`d" ++ (show x)
-    show (Continuation _) = "<cont>"
+import Unlambda.Monad
 
 
 
@@ -88,6 +27,7 @@ parseUnlambda1 input =
     in case firstPass of
         Left e -> Left e
         Right o -> parse unlambda1 "error" o
+
 
 
 
@@ -127,24 +67,24 @@ unlambda1 = do
     return t
 
 
-term  =  (try term1)
-     <|> (try e)
-     <|> (try reed)
-     <|> (try comp)
-     <|> (try bar)
-     <?> "unlambda term"
+term =  (try term1)
+    <|> (try e)
+    <|> (try reed)
+    <|> (try comp)
+    <|> (try bar)
+    <?> "unlambda term"
 
 
-term1  =  (try app)
-      <|> (try s)
-      <|> (try k)
-      <|> (try i)
-      <|> (try v)
-      <|> (try r)
-      <|> (try d)
-      <|> (try c)
-      <|> (try dot)
-      <?> "unlambda term"
+term1 =  (try app)
+    <|> (try s)
+    <|> (try k)
+    <|> (try i)
+    <|> (try v)
+    <|> (try r)
+    <|> (try d)
+    <|> (try c)
+    <|> (try dot)
+    <?> "unlambda term"
 
 
 app = do

@@ -4,40 +4,17 @@ module Unlambda.Interpreter (
 
 
 import System.IO.Error
-import Control.Exception( Exception(..), Handler(..), throw, catches )
-import Control.Monad.Trans.Class
 import Control.Monad.Trans.Cont
-import Control.Monad.Trans.State.Lazy
 import Control.Monad.IO.Class
-import Data.Typeable
 import Data.Maybe
 import Unlambda.Parser
+import Unlambda.Monad
 
-
-
-type ULM a = ContT UnlambdaTerm (StateT (Maybe Char) IO) a
-
-
-data UnlambdaException = UnlambdaException { exitValue :: UnlambdaTerm }
-    deriving (Show, Typeable)
-
-instance Exception UnlambdaException
 
 
 
 unlambda :: UnlambdaTerm -> IO UnlambdaTerm
-unlambda term = catches ((`evalStateT` Nothing) . (`runContT` return) $ eval term)
-                        [ Handler ((\e -> return . exitValue $ e) :: UnlambdaException -> IO UnlambdaTerm) ]
-
-
-
-setCurChar :: Maybe Char -> ULM ()
-setCurChar x = lift (put x)
-
-
-
-getCurChar :: ULM (Maybe Char)
-getCurChar = lift (get)
+unlambda term = getResult $ eval term
 
 
 
@@ -88,7 +65,7 @@ apply firstTerm secondTerm =
             liftIO (putChar '\n')
             return t
 
-        E -> eval secondTerm >>= throw . UnlambdaException
+        E -> eval secondTerm >>= doExit
 
         Reed -> do
             t <- eval secondTerm
