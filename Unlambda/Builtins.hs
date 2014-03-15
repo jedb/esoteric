@@ -4,9 +4,20 @@ module Unlambda.Builtins (
 	i,
 	dot,
 	r,
-	d
+	d,
+	c,
+	e
 	) where
 
+
+import Control.Exception( Exception(..), throw )
+
+
+
+data MyException = MyException { func :: a -> b }
+    deriving (Show, Eq)
+
+instance Exception MyException
 
 
 
@@ -38,4 +49,14 @@ r f = putChar '\n' >> return f
 -- may not work as per unlambda lazy semantics
 d :: (a -> b) -> (a -> b)
 d x = (\y -> x y)
+
+
+
+c :: (a -> b) -> (a -> b)
+c x = (`runCont` id) (callCC $ \cont -> x cont)
+
+
+
+e :: a -> b
+e x = throw (MyException x)
 
