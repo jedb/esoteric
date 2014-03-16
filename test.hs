@@ -4,6 +4,8 @@ import Text.Parsec.Error
 
 import Thue.Parser
 import Fractran.Parser
+import Unlambda.Parser
+import Unlambda.Types
 import Thue.Interpreter
 import Fractran.Interpreter
 import Fractran.Example
@@ -44,6 +46,60 @@ thueParser0 = TestCase (assertEqual ""
 thueParser1 = TestCase (assertEqual ""
                                     (Right (ThueProgram [] "b"))
                                     (parseThue "::=\nb"))
+
+
+
+unlambdaParser0 = TestCase (assertEqual ""
+                                        (Right S)
+                                        (parseUnlambda "s"))
+
+unlambdaParser1 = TestCase (assertEqual ""
+                                        (Right K)
+                                        (parseUnlambda "k"))
+
+unlambdaParser2 = TestCase (assertEqual ""
+                                        (Right I)
+                                        (parseUnlambda "i"))
+
+unlambdaParser3 = TestCase (assertEqual ""
+                                        (Right V)
+                                        (parseUnlambda "v"))
+
+unlambdaParser4 = TestCase (assertEqual ""
+                                        (Right R)
+                                        (parseUnlambda "r"))
+
+unlambdaParser5 = TestCase (assertEqual ""
+                                        (Right D)
+                                        (parseUnlambda "d"))
+
+unlambdaParser6 = TestCase (assertEqual ""
+                                        (Right C)
+                                        (parseUnlambda "c"))
+
+unlambdaParser7 = TestCase (assertEqual ""
+                                        (Right E)
+                                        (parseUnlambda "e"))
+
+unlambdaParser8 = TestCase (assertEqual ""
+                                        (Right (App S K))
+                                        (parseUnlambda "`sk"))
+
+unlambdaParser9 = TestCase (assertEqual ""
+                                        (Right (Dot 'c'))
+                                        (parseUnlambda ".c"))
+
+unlambdaParser10 = TestCase (assertEqual ""
+                                        (Right (Compare '?'))
+                                        (parseUnlambda "??"))
+
+unlambdaParser11 = TestCase (assertEqual ""
+                                        (Right Bar)
+                                        (parseUnlambda "|"))
+
+unlambdaParser12 = TestCase (assertEqual ""
+                                        (Right Reed)
+                                        (parseUnlambda "@"))
 
 
 
@@ -99,4 +155,9 @@ main = do
 
     putStrLn "\nextractInfix"
     runTestTT $ TestList [extractInfix0, extractInfix1, extractInfix2, extractInfix3, extractInfix4, extractInfix5]
+
+    putStrLn "\nUnlambda Parser"
+    runTestTT $ TestList [unlambdaParser0, unlambdaParser1, unlambdaParser2, unlambdaParser3, unlambdaParser4
+                         ,unlambdaParser5, unlambdaParser6, unlambdaParser7, unlambdaParser8, unlambdaParser9
+                         ,unlambdaParser10, unlambdaParser11, unlambdaParser12]
 

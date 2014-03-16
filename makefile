@@ -18,7 +18,7 @@ distclean:
 
 
 testprog:
-	ghc --make test.hs -o ${OUTPUTDIR}/test
+	ghc -XDeriveDataTypeable --make test.hs -o ${OUTPUTDIR}/test
 
 fractranprog:
 	ghc --make fractran.hs -o ${OUTPUTDIR}/fractran
