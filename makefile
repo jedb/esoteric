@@ -3,6 +3,8 @@ OUTPUTDIR = bin
 
 EXECUTABLES = ${OUTPUTDIR}/test ${OUTPUTDIR}/fractran ${OUTPUTDIR}/thue ${OUTPUTDIR}/unlambda
 
+SWITCHES = -XDeriveDataTypeable
+
 
 
 all: testprog fractranprog thueprog unlambdaprog
@@ -18,14 +20,14 @@ distclean:
 
 
 testprog:
-	ghc -XDeriveDataTypeable --make test.hs -o ${OUTPUTDIR}/test
+	ghc ${SWITCHES} --make test.hs -o ${OUTPUTDIR}/test
 
 fractranprog:
-	ghc --make fractran.hs -o ${OUTPUTDIR}/fractran
+	ghc ${SWITCHES} --make fractran.hs -o ${OUTPUTDIR}/fractran
 
 thueprog:
-	ghc --make thue.hs -o ${OUTPUTDIR}/thue
+	ghc ${SWITCHES} --make thue.hs -o ${OUTPUTDIR}/thue
 
 unlambdaprog:
-	ghc -XDeriveDataTypeable --make unlambda.hs -o ${OUTPUTDIR}/unlambda
+	ghc ${SWITCHES} --make unlambda.hs -o ${OUTPUTDIR}/unlambda
 
