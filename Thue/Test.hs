@@ -16,39 +16,23 @@ instance Eq Text.Parsec.Error.ParseError
 
 
 
-parser0 = TestCase (assertEqual ""
-                                (Right (ThueProgram [ThueRule "a" "b"] "a"))
-                                (parseThue "a::=b\n::=\na"))
+parser0 = (Right (ThueProgram [ThueRule "a" "b"] "a")) ~=? (parseThue "a::=b\n::=\na")
 
-parser1 = TestCase (assertEqual ""
-                                (Right (ThueProgram [] "b"))
-                                (parseThue "::=\nb"))
+parser1 = (Right (ThueProgram [] "b")) ~=? (parseThue "::=\nb")
 
 
 
-extractInfix0 = TestCase (assertEqual ""
-                                    Nothing
-                                    (extractInfix [1,2] [3,4,5]))
+extractInfix0 = Nothing ~=? (extractInfix [1,2] [3,4,5])
 
-extractInfix1 = TestCase (assertEqual ""
-                                    (Just ([1,2],[5,6]))
-                                    (extractInfix [3,4] [1,2,3,4,5,6]))
+extractInfix1 = (Just ([1,2],[5,6])) ~=? (extractInfix [3,4] [1,2,3,4,5,6])
 
-extractInfix2 = TestCase (assertEqual ""
-                                    (Just ([],[3,4]))
-                                    (extractInfix [0,1,2] [0,1,2,3,4]))
+extractInfix2 = (Just ([],[3,4])) ~=? (extractInfix [0,1,2] [0,1,2,3,4])
 
-extractInfix3 = TestCase (assertEqual ""
-                                    (Just ([1],[]))
-                                    (extractInfix [2,3] [1,2,3]))
+extractInfix3 = (Just ([1],[])) ~=? (extractInfix [2,3] [1,2,3])
 
-extractInfix4 = TestCase (assertEqual ""
-                                    (Just ([],[1]))
-                                    (extractInfix [] [1]))
+extractInfix4 = (Just ([],[1])) ~=? (extractInfix [] [1])
 
-extractInfix5 = TestCase (assertEqual ""
-                                    (Just ("before","after"))
-                                    (extractInfix "middle" "beforemiddleafter"))
+extractInfix5 = (Just ("before","after")) ~=? (extractInfix "middle" "beforemiddleafter")
 
 
 

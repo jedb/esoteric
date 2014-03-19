@@ -16,57 +16,31 @@ instance Eq Text.Parsec.Error.ParseError
 
 
 
-parser0 = TestCase (assertEqual ""
-                                (Right S)
-                                (parseUnlambda "s"))
+parser0 = (Right S) ~=? (parseUnlambda "s")
 
-parser1 = TestCase (assertEqual ""
-                                (Right K)
-                                (parseUnlambda "k"))
+parser1 = (Right K) ~=? (parseUnlambda "k")
 
-parser2 = TestCase (assertEqual ""
-                                (Right I)
-                                (parseUnlambda "i"))
+parser2 = (Right I) ~=? (parseUnlambda "i")
 
-parser3 = TestCase (assertEqual ""
-                                (Right V)
-                                (parseUnlambda "v"))
+parser3 = (Right V) ~=? (parseUnlambda "v")
 
-parser4 = TestCase (assertEqual ""
-                                (Right R)
-                                (parseUnlambda "r"))
+parser4 = (Right R) ~=? (parseUnlambda "r")
 
-parser5 = TestCase (assertEqual ""
-                                (Right D)
-                                (parseUnlambda "d"))
+parser5 = (Right D) ~=? (parseUnlambda "d")
 
-parser6 = TestCase (assertEqual ""
-                                (Right C)
-                                (parseUnlambda "c"))
+parser6 = (Right C) ~=? (parseUnlambda "c")
 
-parser7 = TestCase (assertEqual ""
-                                (Right E)
-                                (parseUnlambda "e"))
+parser7 = (Right E) ~=? (parseUnlambda "e")
 
-parser8 = TestCase (assertEqual ""
-                                (Right (App S K))
-                                (parseUnlambda "`sk"))
+parser8 = (Right (App S K)) ~=? (parseUnlambda "`sk")
 
-parser9 = TestCase (assertEqual ""
-                                (Right (Dot 'c'))
-                                (parseUnlambda ".c"))
+parser9 = (Right (Dot 'c')) ~=? (parseUnlambda ".c")
 
-parser10 = TestCase (assertEqual ""
-                                (Right (Compare '?'))
-                                (parseUnlambda "??"))
+parser10 = (Right (Compare '?')) ~=? (parseUnlambda "??")
 
-parser11 = TestCase (assertEqual ""
-                                (Right Bar)
-                                (parseUnlambda "|"))
+parser11 = (Right Bar) ~=? (parseUnlambda "|")
 
-parser12 = TestCase (assertEqual ""
-                                (Right Reed)
-                                (parseUnlambda "@"))
+parser12 = (Right Reed) ~=? (parseUnlambda "@")
 
 
 
