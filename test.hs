@@ -23,3 +23,7 @@ main = do
     putStrLn "\nUnlambda Parser"
     runTestTT Unlambda.Test.parserTests
 
+    putStrLn "\nUnlambda Interpreter"
+    tests <- Unlambda.Test.interpreterTests
+    runTestTT tests
+
