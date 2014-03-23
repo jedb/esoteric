@@ -50,23 +50,30 @@ parser12 = (Right Reed) ~=? (parseUnlambda "@")
 
 interpretString :: String -> IO (Maybe (String,UnlambdaTerm))
 interpretString input =
-	let t = parseUnlambda input
-	in case t of
-		Left _ -> return Nothing
-		Right term -> do
-			c <- capture (unlambda term)
-			return (Just c)
+    let t = parseUnlambda input
+    in case t of
+        Left _ -> return Nothing
+        Right term -> do
+            c <- capture (unlambda term)
+            return (Just c)
 
 
 
 interpreter0 = (liftM2 (~=?))
-                    (return (Just ("\n",R)) )
+                    (return (Just ("\n", R)) )
                     (interpretString "``cir")
 
 interpreter1 = (liftM2 (~=?))
-                    (return (Just ("",I)) )
+                    (return (Just ("", I)) )
                     (interpretString "`c``s`kr``si`ki")
 
+interpreter2 = (liftM2 (~=?))
+                    (return (Just ("", Promise (App R I))) )
+                    (interpretString "`d`ri")
+
+interpreter3 = (liftM2 (~=?))
+                    (return (Just ("\n", Promise I)) )
+                    (interpretString "``dd`ri")
 
 
 
@@ -78,9 +85,11 @@ parserTests = TestList [parser0, parser1, parser2, parser3, parser4, parser5, pa
 
 interpreterTests :: IO Test
 interpreterTests = do
-	t0 <- interpreter0
-	t1 <- interpreter1
-	return (TestList [t0,t1])
+    t0 <- interpreter0
+    t1 <- interpreter1
+    t2 <- interpreter2
+    t3 <- interpreter3
+    return (TestList [t0,t1,t2,t3])
 
 
 
