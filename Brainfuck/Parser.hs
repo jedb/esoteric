@@ -22,24 +22,37 @@ parseBrainfuck = parse brainfuck "error"
 
 
 
-brainfuck = many commentChar >> many fuck
-
-
-fuck = do
-	f <- brainCommand
+brainfuck = do
 	many commentChar
-	return f
+	bs <- many fuck
+	eof
+	return . concat $ bs
 
 
-brainCommand =  try (char '>' >> return R)
-            <|> try (char '<' >> return L)
-            <|> try (char '+' >> return Inc)
-            <|> try (char '-' >> return Dec)
-            <|> try (char '.' >> return Out)
-            <|> try (char ',' >> return In)
-            <|> try (char '[' >> return OpenLoop)
-            <|> try (char ']' >> return CloseLoop)
-            <?> "brainfuck command"
+fuck =  (brainCommand >>= return . (:[]))
+    <|> loop
+    <?> "brainfuck command"
+
+
+loop = do
+	char '['
+	many commentChar
+	bs <- many brainCommand
+	char ']'
+	many commentChar
+	return . concat $ [[OpenLoop],bs,[CloseLoop]]
+
+
+brainCommand = do { b <- brainCom; many commentChar; return b }
+
+
+brainCom =  (char '>' >> return R)
+        <|> (char '<' >> return L)
+        <|> (char '+' >> return Inc)
+        <|> (char '-' >> return Dec)
+        <|> (char '.' >> return Out)
+        <|> (char ',' >> return In)
+        <?> "brainfuck command"
 
 
 commentChar = noneOf "><+-.,[]"
