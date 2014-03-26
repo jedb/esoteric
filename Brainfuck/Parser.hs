@@ -1,4 +1,7 @@
 module Brainfuck.Parser (
+    BrainfuckProgram,
+    BrainCom(..),
+
 	parseBrainfuck
     ) where
 
