@@ -1,13 +1,17 @@
 
 OUTPUTDIR = bin
 
-EXECUTABLES = ${OUTPUTDIR}/test ${OUTPUTDIR}/fractran ${OUTPUTDIR}/thue ${OUTPUTDIR}/unlambda
+EXECUTABLES  =  ${OUTPUTDIR}/test \
+                ${OUTPUTDIR}/fractran \
+                ${OUTPUTDIR}/thue \
+                ${OUTPUTDIR}/unlambda \
+                ${OUTPUTDIR}/brainfuck
 
 SWITCHES = -XDeriveDataTypeable
 
 
 
-all: testprog fractranprog thueprog unlambdaprog
+all: testprog fractranprog thueprog unlambdaprog brainfuckprog
 
 
 clean:
@@ -31,3 +35,5 @@ thueprog:
 unlambdaprog:
 	ghc ${SWITCHES} --make unlambda.hs -o ${OUTPUTDIR}/unlambda
 
+brainfuckprog:
+	ghc ${SWITCHES} --make brainfuck.hs -o ${OUTPUTDIR}/brainfuck
