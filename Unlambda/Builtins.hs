@@ -36,6 +36,14 @@ i = id
 
 
 
+class Void a where
+	v :: a -> r
+
+instance Void v => Void (a -> r) where
+	v x = v
+
+
+
 dot :: Char -> a -> IO a
 dot ch f = putChar ch >> return f
 
