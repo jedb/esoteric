@@ -1,5 +1,6 @@
 
 OUTPUTDIR = bin
+SOURCEDIR = src
 
 EXECUTABLES  =  ${OUTPUTDIR}/test \
                 ${OUTPUTDIR}/fractran \
@@ -24,16 +25,21 @@ distclean:
 
 
 testprog:
-	ghc ${SWITCHES} --make test.hs -o ${OUTPUTDIR}/test
+	cd ${SOURCEDIR}; \
+	ghc ${SWITCHES} --make test.hs -o ../${OUTPUTDIR}/test
 
 fractranprog:
-	ghc ${SWITCHES} --make fractran.hs -o ${OUTPUTDIR}/fractran
+	cd ${SOURCEDIR}; \
+	ghc ${SWITCHES} --make fractran.hs -o ../${OUTPUTDIR}/fractran
 
 thueprog:
-	ghc ${SWITCHES} --make thue.hs -o ${OUTPUTDIR}/thue
+	cd ${SOURCEDIR}; \
+	ghc ${SWITCHES} --make thue.hs -o ../${OUTPUTDIR}/thue
 
 unlambdaprog:
-	ghc ${SWITCHES} --make unlambda.hs -o ${OUTPUTDIR}/unlambda
+	cd ${SOURCEDIR}; \
+	ghc ${SWITCHES} --make unlambda.hs -o ../${OUTPUTDIR}/unlambda
 
 brainfuckprog:
-	ghc ${SWITCHES} --make brainfuck.hs -o ${OUTPUTDIR}/brainfuck
+	cd ${SOURCEDIR}; \
+	ghc ${SWITCHES} --make brainfuck.hs -o ../${OUTPUTDIR}/brainfuck
