@@ -34,9 +34,9 @@ interpret state rules gen = do
         (before, after) = fromJust (extractInfix (original ruleToApply) state)
 
     state' <- case (replacement ruleToApply) of
-                ":::" -> getLine >>= (\x -> return (before ++ x ++ after))
+                ":::" -> getLine >>= return . toThueState >>= (\x -> return (before ++ x ++ after))
 
-                '~':xs -> putStr xs >> return (before ++ after)
+                '~':xs -> return (fromThueState xs) >>= putStr >> return (before ++ after)
 
                 x -> return (before ++ x ++ after)
 

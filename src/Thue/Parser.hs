@@ -3,7 +3,9 @@ module Thue.Parser (
 	ThueRule(..),
 	ThueState,
 
-	parseThue
+	parseThue,
+	toThueState,
+	fromThueState
 	) where
 
 import Control.Applicative( some )
@@ -28,6 +30,16 @@ type ThueState = String
 
 parseThue :: String -> Either ParseError ThueProgram
 parseThue = parse thue "error"
+
+
+
+toThueState :: String -> ThueState
+toThueState = id
+
+
+
+fromThueState :: ThueState -> String
+fromThueState = id
 
 
 
@@ -58,7 +70,7 @@ initialState = do
 	return (concat s)
 
 
-ruleState = some ruleStateChar
+ruleState = some ruleStateChar >>= return . toThueState
 
 
 ruleStateChar  =  noneOf "\n\r:"
@@ -66,7 +78,7 @@ ruleStateChar  =  noneOf "\n\r:"
 	          <?> "state character"
 
 
-state = many stateChar
+state = many stateChar >>= return . toThueState
 
 
 stateChar  =  noneOf "\n\r"
