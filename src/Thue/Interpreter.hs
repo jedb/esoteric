@@ -12,6 +12,15 @@ import Thue.Parser
 
 
 
+data ThueVersion = Ver1 | Ver2a
+    deriving (Eq)
+
+
+data Choice = Random StdGen
+            | First
+            | Last
+
+
 
 thue :: ThueProgram -> IO ThueState
 thue program =
@@ -19,30 +28,42 @@ thue program =
         state = thueInitialState program
         gen = mkStdGen 4 --chosen by fair dice roll, guaranteed to be random
 
-    in interpret state rules gen
+    in interpret Ver1 rules (Random gen) state
 
 
 
-interpret :: ThueState -> [ThueRule] -> StdGen -> IO ThueState
-interpret state rules gen =
+interpret :: ThueVersion -> [ThueRule] -> Choice -> ThueState -> IO ThueState
+interpret ver rules gen state =
     let possibleRules = rules `applicableTo` state
-        ruleToApply = possibleRules !! num
-
-        (num, gen') = nextInRange 0 (length possibleRules - 1) gen
+        (ruleToApply, gen') = choose possibleRules gen
 
     in if (possibleRules == [])
         then return state
-        else applyRule ruleToApply state >>= (\x -> interpret x rules gen')
+        else applyRule ver ruleToApply state >>= interpret ver rules gen'
 
 
 
-applyRule :: ThueRule -> ThueState -> IO ThueState
-applyRule rule state =
+choose :: [ThueRule] -> Choice -> (ThueRule, Choice)
+choose ruleList gen =
+    case gen of
+        First -> (head ruleList, First)
+
+        Last -> (last ruleList, Last)
+
+        Random g -> let (num, g') = nextInRange 0 (length ruleList - 1) g
+                    in (ruleList !! num, Random g')
+
+
+
+applyRule :: ThueVersion -> ThueRule -> ThueState -> IO ThueState
+applyRule ver rule state =
     let (before, after) = fromJust (extractInfix (original rule) state)
+
+        inputProc = if (ver == Ver1) then return . tStr else return . tLitStr
 
     in case (replacement rule) of
         x | x == (tStr ":::") ->
-            getLine >>= return . toThueState >>= return . (before ++) . (++ after)
+            getLine >>= inputProc >>= return . (before ++) . (++ after)
 
         x:xs | x == (tCh '~') ->
             putStr (fromThueState xs) >> return (before ++ after)

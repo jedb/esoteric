@@ -4,11 +4,12 @@ module Thue.Parser (
 	ThueState,
 	ThueChar(..),
 
-    tCh,
-    tStr,
-
 	parseThue,
-	toThueState,
+	
+	tCh,
+	tLit,
+	tStr,
+	tLitStr,
 	fromThueState
 	) where
 
@@ -48,23 +49,20 @@ parseThue = parse thue "error"
 
 
 
-toThueState :: String -> ThueState
-toThueState = map TChar
-
-
-
-fromThueState :: ThueState -> String
-fromThueState = map tChar
-
-
-
 tCh :: Char -> ThueChar
 tCh = TChar
 
-
+tLit :: Char -> ThueChar
+tLit = TLit
 
 tStr :: String -> ThueState
 tStr = map TChar
+
+tLitStr :: String -> ThueState
+tLitStr = map TLit
+
+fromThueState :: ThueState -> String
+fromThueState = map tChar
 
 
 
