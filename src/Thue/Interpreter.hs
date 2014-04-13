@@ -24,23 +24,30 @@ thue program =
 
 
 interpret :: ThueState -> [ThueRule] -> StdGen -> IO ThueState
-interpret state rules gen = do
+interpret state rules gen =
     let possibleRules = rules `applicableTo` state
-        ruleToApply = if (possibleRules == []) then (ThueRule "" "") else possibleRules !! num
-        -- ^ dummy rule if no possible rules apply
+        ruleToApply = possibleRules !! num
 
         (num, gen') = nextInRange 0 (length possibleRules - 1) gen
 
-        (before, after) = fromJust (extractInfix (original ruleToApply) state)
+    in if (possibleRules == [])
+        then return state
+        else applyRule ruleToApply state >>= (\x -> interpret x rules gen')
 
-    state' <- case (replacement ruleToApply) of
-                ":::" -> getLine >>= return . toThueState >>= (\x -> return (before ++ x ++ after))
 
-                '~':xs -> return (fromThueState xs) >>= putStr >> return (before ++ after)
 
-                x -> return (before ++ x ++ after)
+applyRule :: ThueRule -> ThueState -> IO ThueState
+applyRule rule state =
+    let (before, after) = fromJust (extractInfix (original rule) state)
 
-    if (possibleRules == []) then return state else interpret state' rules gen'
+    in case (replacement rule) of
+        x | x == (tStr ":::") ->
+            getLine >>= return . toThueState >>= return . (before ++) . (++ after)
+
+        x:xs | x == (tCh '~') ->
+            putStr (fromThueState xs) >> return (before ++ after)
+
+        x -> return (before ++ x ++ after)
 
 
 

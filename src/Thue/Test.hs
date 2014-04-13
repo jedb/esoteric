@@ -16,9 +16,9 @@ instance Eq Text.Parsec.Error.ParseError
 
 
 
-parser0 = (Right (ThueProgram [ThueRule "a" "b"] "a")) ~=? (parseThue "a::=b\n::=\na")
+parser0 = (Right (ThueProgram [ThueRule (tStr "a") (tStr "b")] (tStr "a")) ) ~=? (parseThue "a::=b\n::=\na")
 
-parser1 = (Right (ThueProgram [] "b")) ~=? (parseThue "::=\nb")
+parser1 = (Right (ThueProgram [] (tStr "b")) ) ~=? (parseThue "::=\nb")
 
 
 

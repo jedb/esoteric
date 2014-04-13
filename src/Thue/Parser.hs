@@ -2,6 +2,10 @@ module Thue.Parser (
 	ThueProgram(..),
 	ThueRule(..),
 	ThueState,
+	ThueChar(..),
+
+    tCh,
+    tStr,
 
 	parseThue,
 	toThueState,
@@ -13,17 +17,23 @@ import Text.ParserCombinators.Parsec
 
 
 
-data ThueProgram = ThueProgram { thueRules :: [ThueRule]
-                               , thueInitialState :: ThueState }
+
+data ThueProgram = ThueProgram  { thueRules :: [ThueRule]
+                                , thueInitialState :: ThueState }
     deriving (Show, Eq)
 
 
-data ThueRule = ThueRule { original :: ThueState
-                         , replacement :: ThueState }
+data ThueRule  =  ThueRule  { original :: ThueState
+                            , replacement :: ThueState }
     deriving (Show, Eq)
 
 
-type ThueState = String
+type ThueState = [ThueChar]
+
+
+data ThueChar = TChar { tChar :: Char }
+              | TLit { tChar :: Char }
+    deriving (Show, Eq)
 
 
 
@@ -33,13 +43,28 @@ parseThue = parse thue "error"
 
 
 
+--parseThue2a :: String -> Either ParseError Thue2aProgram
+--parseThue2a = parse thue2a "error"
+
+
+
 toThueState :: String -> ThueState
-toThueState = id
+toThueState = map TChar
 
 
 
 fromThueState :: ThueState -> String
-fromThueState = id
+fromThueState = map tChar
+
+
+
+tCh :: Char -> ThueChar
+tCh = TChar
+
+
+
+tStr :: String -> ThueState
+tStr = map TChar
 
 
 
@@ -70,18 +95,18 @@ initialState = do
 	return (concat s)
 
 
-ruleState = some ruleStateChar >>= return . toThueState
+ruleState = some ruleStateChar
 
 
-ruleStateChar  =  noneOf "\n\r:"
-	          <|> try (char ':' >> notFollowedBy (string ":=") >> return ':')
+ruleStateChar  =  (noneOf "\n\r:" >>= return . TChar)
+	          <|> try (char ':' >> notFollowedBy (string ":=") >> return (TChar ':'))
 	          <?> "state character"
 
 
-state = many stateChar >>= return . toThueState
+state = many stateChar
 
 
-stateChar  =  noneOf "\n\r"
+stateChar  =  (noneOf "\n\r" >>= return . TChar)
           <?> "state character"
 
 
