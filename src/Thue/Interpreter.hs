@@ -12,10 +12,6 @@ import Thue.Parser
 
 
 
-data ThueVersion = Ver1 | Ver2a
-    deriving (Eq)
-
-
 data Choice = Random StdGen
             | First
             | Last
@@ -26,9 +22,10 @@ thue :: ThueProgram -> IO ThueState
 thue program =
     let rules = thueRules program
         state = thueInitialState program
+        version = thueVersion program
         gen = mkStdGen 4 --chosen by fair dice roll, guaranteed to be random
 
-    in interpret Ver1 rules (Random gen) state
+    in interpret version rules (Random gen) state
 
 
 

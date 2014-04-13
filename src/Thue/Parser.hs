@@ -4,7 +4,10 @@ module Thue.Parser (
 	ThueState,
 	ThueChar(..),
 
+	ThueVersion(..),
+
 	parseThue,
+	parseThue2a,
 	
 	tCh,
 	tLit,
@@ -20,7 +23,8 @@ import Text.ParserCombinators.Parsec
 
 
 data ThueProgram = ThueProgram  { thueRules :: [ThueRule]
-                                , thueInitialState :: ThueState }
+                                , thueInitialState :: ThueState
+                                , thueVersion :: ThueVersion }
     deriving (Show, Eq)
 
 
@@ -37,15 +41,19 @@ data ThueChar = TChar { tChar :: Char }
     deriving (Show, Eq)
 
 
+data ThueVersion = Ver1 | Ver2a
+    deriving (Show, Eq)
+
+
 
 
 parseThue :: String -> Either ParseError ThueProgram
-parseThue = parse thue "error"
+parseThue = parse (thue Ver1) "error"
 
 
 
---parseThue2a :: String -> Either ParseError Thue2aProgram
---parseThue2a = parse thue2a "error"
+parseThue2a :: String -> Either ParseError ThueProgram
+parseThue2a = parse (thue Ver2a) "error"
 
 
 
@@ -67,48 +75,47 @@ fromThueState = map tChar
 
 
 
-thue = do
-	rs <- many rule
+thue ver = do
+	rs <- many (rule ver)
 	separatorLine
-	i <- initialState
+	i <- initialState ver
 	eof
-	return (ThueProgram rs i)
+	return (ThueProgram rs i ver)
 
 
-rule = do
-	o <- ruleState
+rule ver = do
+	o <- ruleState ver
 	separator
-	r <- state
+	r <- state ver
 	eol
 	return (ThueRule o r)
 
 
-separatorLine = whiteSpace >> separator >> whiteSpace >> eol
+separatorLine = separator >> eol
 separator  =  string "::="
           <?> "rule separator"
 
 
-initialState = do
-	s <- state `sepEndBy` eol
+initialState ver = do
+	s <- (state ver) `sepEndBy` eol
 	return (concat s)
 
 
-ruleState = some ruleStateChar
+ruleState ver = some (ruleStateChar ver)
 
 
-ruleStateChar  =  (noneOf "\n\r:" >>= return . TChar)
-	          <|> try (char ':' >> notFollowedBy (string ":=") >> return (TChar ':'))
-	          <?> "state character"
+ruleStateChar ver =
+	(noneOf "\n\r:" >>= return . TChar)
+	<|> try (char ':' >> notFollowedBy (string ":=") >> return (TChar ':'))
+	<?> "state character"
 
 
-state = many stateChar
+state ver = many (stateChar ver)
 
 
-stateChar  =  (noneOf "\n\r" >>= return . TChar)
-          <?> "state character"
-
-
-whiteSpace = many (oneOf "\t ")
+stateChar ver =
+	(noneOf "\n\r" >>= return . TChar)
+    <?> "state character"
 
 
 eol  =  try (string "\r\n")
