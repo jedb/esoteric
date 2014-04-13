@@ -56,7 +56,7 @@ applyRule :: ThueVersion -> ThueRule -> ThueState -> IO ThueState
 applyRule ver rule state =
     let (before, after) = fromJust (extractInfix (original rule) state)
 
-        inputProc = if (ver == Ver1) then return . tStr else return . tLitStr
+        inputProc = if (ver == Ver2a) then return . tLitStr else return . tStr
 
     in case (replacement rule) of
         x | x == (tStr ":::") ->
