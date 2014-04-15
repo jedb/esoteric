@@ -101,21 +101,50 @@ initialState ver = do
 	return (concat s)
 
 
-ruleState ver = some (ruleStateChar ver)
+ruleState Ver2a = some ruleStatePart >>= return . concat
+ruleState Ver1 = some (ruleStateChar Ver1) >>= return . tStr
 
 
-ruleStateChar ver =
-	(noneOf "\n\r:" >>= return . TChar)
-	<|> try (char ':' >> notFollowedBy (string ":=") >> return (TChar ':'))
-	<?> "state character"
+ruleStatePart =
+	(try (some (ruleStateChar Ver2a) >>= return . tStr))
+	<|> quoteString
+	<?> "thue state"
 
 
-state ver = many (stateChar ver)
+ruleStateChar Ver2a = try escapeChar <|> (noneOf "\\\n\r\":") <|> colon <?> "state character"
+ruleStateChar Ver1 = (noneOf "\n\r:") <|> colon <?> "state character"
+colon = try (char ':' >> notFollowedBy (string ":=") >> return ':')
 
 
-stateChar ver =
-	(noneOf "\n\r" >>= return . TChar)
-    <?> "state character"
+state Ver2a = many statePart >>= return . concat
+state Ver1 = many (stateChar Ver1) >>= return . tStr
+
+
+statePart =
+	(try (some (stateChar Ver2a) >>= return . tStr))
+	<|> quoteString
+	<?> "thue state"
+
+
+stateChar Ver2a = (try escapeChar) <|> (noneOf "\\\n\r\"") <?> "state character"
+stateChar Ver1 = (noneOf "\n\r") <?> "state character"
+
+
+escapeChar = char '\\' >> charCode
+charCode =
+	(char 'n' >> return '\n')
+	<|> (char '"')
+	<|> (char 'E' >> char 'O' >> char 'T' >> return '\EOT')
+	<|> (char ':')
+	<|> (char 'r' >> return '\r')
+	<|> (char '\\')
+
+
+quoteString = do
+	char '"'
+	str <- some (stateChar Ver2a)
+	char '"'
+	return (tLitStr str)
 
 
 eol  =  try (string "\r\n")
