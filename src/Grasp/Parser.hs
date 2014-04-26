@@ -36,12 +36,17 @@ parseGrasp = parse grasp "error"
 grasp = do
 	string "digraph {"
 	whiteSpace
-	n <- many node
-	e <- many edge
+	(n,e) <- stmtList ([],[])
 	string "}"
 	eol
 	eof
 	return (n,e)
+
+
+stmtList (n,e) =
+	    try (node >>= (\x -> stmtList (x:n,e)) )
+	<|> try (edge >>= (\x -> stmtList (n,x:e)) )
+	<|> return (reverse n, reverse e)
 
 
 node = do
