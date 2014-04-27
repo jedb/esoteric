@@ -1,6 +1,12 @@
 module Grasp.Parser (
     GraspProgram(..),
-    parseGrasp
+    GraspNode,
+
+    parseGrasp,
+
+    getNodeLabel,
+    getFloat,
+    getString
     ) where
 
 
@@ -13,7 +19,15 @@ import Data.Graph.Inductive.Tree
 
 
 
-data GraspProgram = Gr String String
+data GraspProgram = Gr GraspNode GraspLabel
+
+
+data GraspNode  = GFloat GraspLabel Float
+                | GString GraspLabel String
+                | GEmpty GraspLabel
+
+
+type GraspLabel = String
 
 
 
@@ -29,6 +43,25 @@ parseGrasp = parse grasp "error"
 
 
 --validate :: [LNode String] -> [LEdge String] -> Either ParseError GraspProgram
+
+
+
+getNodeLabel :: GraspNode -> GraspLabel
+getNodeLabel (GFloat label _) = label
+getNodeLabel (GString label _) = label
+getNodelabel (GEmpty label) = label
+
+
+
+getFloat :: GraspNode -> Maybe Float
+getFloat (GFloat _ f) = Just f
+getFloat _ = Nothing
+
+
+
+getString :: GraspNode -> Maybe String
+getString (GString _ s) = Just s
+getString _ = Nothing
 
 
 
