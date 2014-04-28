@@ -13,20 +13,14 @@ import Unlambda.Types
 
 
 parseUnlambda :: String -> Either ParseError UnlambdaTerm
-parseUnlambda input = 
-    let firstPass = parse removeComments "error" input
-    in case firstPass of
-        Left e -> Left e
-        Right o -> parse unlambda "error" o
+parseUnlambda input =
+    parse removeComments "error" input >>= parse unlambda "error"
 
 
 
 parseUnlambda1 :: String -> Either ParseError UnlambdaTerm
 parseUnlambda1 input =
-    let firstPass = parse removeComments "error" input
-    in case firstPass of
-        Left e -> Left e
-        Right o -> parse unlambda1 "error" o
+    parse removeComments "error" input >>= parse unlambda1 "error"
 
 
 
