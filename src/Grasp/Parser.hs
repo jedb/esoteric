@@ -1,17 +1,14 @@
 module Grasp.Parser (
     GraspProgram(..),
-    GraspNode,
 
     parseGrasp,
-
-    getNodeLabel,
-    getFloat,
-    getString
     ) where
 
 
 import Control.Applicative( some )
 import Text.ParserCombinators.Parsec
+import Text.ParserCombinators.Parsec.Error
+import Text.Parsec.Pos
 import Data.Graph.Inductive.Graph( Node, LNode, LEdge, (&) )
 import Data.Graph.Inductive.Graph as Graph
 import Data.Graph.Inductive.Tree
@@ -19,49 +16,50 @@ import Data.Graph.Inductive.Tree
 
 
 
-data GraspProgram = Gr GraspNode GraspLabel
-
-
-data GraspNode  = GFloat GraspLabel Float
-                | GString GraspLabel String
-                | GEmpty GraspLabel
-
-
-type GraspLabel = String
+type GraspProgram = Gr String String
 
 
 
 
-parseGrasp :: String -> Either ParseError ([LNode String],[LEdge String])
-parseGrasp = parse grasp "error"
---parseGrasp input =
---	let firstPass = parse grasp "error" input
---	in case firstPass of
---		Left e -> Left e
---		Right (n,e) -> validate n e
+parseGrasp :: String -> Either ParseError GraspProgram
+parseGrasp input = parse grasp "error" input >>= validate
 
 
 
---validate :: [LNode String] -> [LEdge String] -> Either ParseError GraspProgram
+validate :: ([LNode String],[LEdge String]) -> Either ParseError GraspProgram
+validate (nodeList, edgeList) =
+	let nameEdges = filter (\(_,_,z) -> z == "name") edgeList
+
+	    nameNodes = map (\(_,x,_) -> x) nameEdges
+	    nameLNodes = filter (\(x,_) -> x `elem` nameNodes) nodeList
+
+	    a = multiNames nameEdges
+	    b = nonStringNames nameLNodes
+	    c = noGraspMain nameLNodes
+
+	in case (a,b,c) of
+		([],[],False) -> Right (Graph.mkGraph nodeList edgeList)
+
+		([],[],True) -> Left (newErrorMessage (Message "could not find grasp:main") (newPos "" 0 0))
+
+		([],(x:_),_) -> Left (newErrorMessage (Message ("node " ++ (show x) ++ " has a numeric name")) (newPos "" 0 0))
+
+		((x:_),_,_) -> Left (newErrorMessage (Message ("node " ++ (show x) ++ " has multiple names")) (newPos "" 0 0))
 
 
 
-getNodeLabel :: GraspNode -> GraspLabel
-getNodeLabel (GFloat label _) = label
-getNodeLabel (GString label _) = label
-getNodelabel (GEmpty label) = label
+multiNames :: [LEdge String] -> [LNode String]
+multiNames x = []
 
 
 
-getFloat :: GraspNode -> Maybe Float
-getFloat (GFloat _ f) = Just f
-getFloat _ = Nothing
+nonStringNames :: [LNode String] -> [LNode String]
+nonStringNames x = []
 
 
 
-getString :: GraspNode -> Maybe String
-getString (GString _ s) = Just s
-getString _ = Nothing
+noGraspMain :: [LNode String] -> Bool
+noGraspMain x = False
 
 
 
