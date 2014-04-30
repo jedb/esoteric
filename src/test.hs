@@ -3,6 +3,7 @@ import Test.HUnit
 import qualified Fractran.Test
 import qualified Thue.Test
 import qualified Unlambda.Test
+import qualified Grasp.Test
 
 
 
@@ -26,4 +27,7 @@ main = do
     putStrLn "\nUnlambda Interpreter"
     tests <- Unlambda.Test.interpreterTests
     runTestTT tests
+
+    putStrLn "\nGrasp Parser"
+    runTestTT Grasp.Test.parserTests
 
