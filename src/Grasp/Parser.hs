@@ -2,6 +2,7 @@ module Grasp.Parser (
     GraspProgram(..),
 
     parseGrasp,
+    dup
     ) where
 
 
@@ -9,6 +10,7 @@ import Control.Applicative( some )
 import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Error
 import Text.Parsec.Pos
+import Text.Read( readMaybe )
 import Data.Graph.Inductive.Graph( Node, LNode, LEdge, (&) )
 import Data.Graph.Inductive.Graph as Graph
 import Data.Graph.Inductive.Tree
@@ -29,16 +31,16 @@ type StrLEdge a = (String,String,a)
 
 parseGrasp :: String -> Either ParseError GraspProgram
 parseGrasp input =
-	parse grasp "error" input >>= connected >>= nameCheck
+	parse grasp "error" input >>= sanityCheck >>= nameCheck >>= return . constructGraph
 
 
 
-connected :: ([LNode String],[LEdge String]) -> Either ParseError ([LNode String],[LEdge String])
-connected (nodeList, edgeList) = Right (nodeList, edgeList)
+sanityCheck :: ([LNode String],[LEdge String]) -> Either ParseError ([LNode String],[LEdge String])
+sanityCheck (nodeList, edgeList) = Right (nodeList, edgeList)
 
 
 
-nameCheck :: ([LNode String],[LEdge String]) -> Either ParseError GraspProgram
+nameCheck :: ([LNode String],[LEdge String]) -> Either ParseError ([LNode String],[LEdge String])
 nameCheck (nodeList, edgeList) =
 	let nameEdges = filter (\(_,_,z) -> z == "name") edgeList
 
@@ -53,13 +55,13 @@ nameCheck (nodeList, edgeList) =
 	    c = graspMainPresent namedNodes
 
 	in case (a,b,c) of
-		(Nothing,Nothing,True) -> Right (constructGraph nodeList edgeList)
-
-		(Nothing,Nothing,False) -> Left (newErrorMessage (Message "could not find grasp:main") (newPos "" 0 0))
-
-		(Nothing,Just x,_) -> Left (newErrorMessage (Message ("node " ++ (show x) ++ " has a numeric name")) (newPos "" 0 0))
-
 		(Just x,_,_) -> Left (newErrorMessage (Message ("node " ++ (show x) ++ " has multiple names")) (newPos "" 0 0))
+
+		(_,Just x,_) -> Left (newErrorMessage (Message ("node " ++ (show x) ++ " has a numeric name")) (newPos "" 0 0))
+
+		(_,_,False) -> Left (newErrorMessage (Message "could not find grasp:main") (newPos "" 0 0))
+
+		(_,_,_) -> Right (nodeList, edgeList)
 
 
 
@@ -69,7 +71,10 @@ multiNames = dup . (map fst)
 
 
 nonStringNames :: [(LNode String, String)] -> Maybe (LNode String)
-nonStringNames x = Nothing
+nonStringNames nodeList =
+	let f x = readMaybe x :: Maybe Float
+	    nonStringNames = filter (isJust . f . snd) nodeList
+	in if (nonStringNames == []) then Nothing else Just (fst . head $ nonStringNames)
 
 
 
@@ -78,12 +83,12 @@ graspMainPresent = any (\x -> snd x == "grasp:main")
 
 
 
-constructGraph :: [LNode String] -> [LEdge String] -> GraspProgram
-constructGraph = Graph.mkGraph
+constructGraph :: ([LNode String],[LEdge String]) -> GraspProgram
+constructGraph = uncurry Graph.mkGraph
 
 
 
-dup :: [a] -> Maybe a
+dup :: (Eq a) => [a] -> Maybe a
 dup x =
 	let dup' [] _ = Nothing
 	    dup' (x:xs) s = if (x `elem` s) then Just x else dup' xs (x:s)
