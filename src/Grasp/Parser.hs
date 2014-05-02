@@ -1,10 +1,5 @@
 module Grasp.Parser (
-    GraspProgram(..),
-    GraspData(..),
-
     parseGrasp,
-    nodesWithName,
-    iso,
     dup
     ) where
 
@@ -19,23 +14,16 @@ import Data.Graph.Inductive.Graph as Graph
 import Data.Graph.Inductive.Tree
 import Data.List
 import Data.Maybe
+import Grasp.Types
 
 
 
-
-type GraspProgram = Gr String String
 
 type StrLNode a = (String,a)
 
 type StrLEdge a = (String,String,a)
 
 type GraspData = ([StrLNode String],[StrLEdge String])
-
-
-
-instance (Ord a, Ord b) => Eq (Gr a b) where
-	a == b  =   ((sort . Graph.labNodes $ a) == (sort . Graph.labNodes $ b)) &&
-	            ((sort . Graph.labEdges $ a) == (sort . Graph.labEdges $ b))
 
 
 
@@ -96,28 +84,6 @@ graspMainPresent = any (\x -> snd x == "grasp:main")
 
 constructGraph :: ([LNode String],[LEdge String]) -> GraspProgram
 constructGraph = uncurry Graph.mkGraph
-
-
-
-nodesWithName :: GraspProgram -> String -> [LNode String]
-nodesWithName g s = []
-
-
-
-normalise :: GraspData -> ([LNode String],[LEdge String])
-normalise (n,e) = ([],[])
-
-
-
-iso :: GraspProgram -> GraspProgram -> Bool
-iso a b =
-	let f (x,y) = (show x, y)
-	    g (x,y,z) = (show x, show y, z)
-
-        -- converts a grasp program into grasp data
-	    h x = ((map f) . Graph.labNodes $ x, (map g) . Graph.labEdges $ x)
-
-	in (constructGraph . normalise . h $ a) == (constructGraph . normalise . h $ b)
 
 
 
