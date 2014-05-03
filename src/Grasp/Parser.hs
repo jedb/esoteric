@@ -14,6 +14,7 @@ import Data.Graph.Inductive.Graph as Graph
 import Data.Graph.Inductive.Tree
 import Data.List
 import Data.Maybe
+import qualified Data.Map as Map
 import Grasp.Types
 
 
@@ -34,12 +35,12 @@ parseGrasp input =
 
 
 
-sanityCheck :: ([LNode String],[LEdge String]) -> Either ParseError ([LNode String],[LEdge String])
+sanityCheck :: GraspData -> Either ParseError GraspData
 sanityCheck (nodeList, edgeList) = Right (nodeList, edgeList)
 
 
 
-nameCheck :: ([LNode String],[LEdge String]) -> Either ParseError ([LNode String],[LEdge String])
+nameCheck :: GraspData -> Either ParseError GraspData
 nameCheck (nodeList, edgeList) =
 	let nameEdges = filter (\(_,_,z) -> z == "name") edgeList
 
@@ -64,12 +65,12 @@ nameCheck (nodeList, edgeList) =
 
 
 
-multiNames :: [(LNode String, String)] -> Maybe (LNode String)
+multiNames :: [(StrLNode String, String)] -> Maybe (StrLNode String)
 multiNames = dup . (map fst)
 
 
 
-nonStringNames :: [(LNode String, String)] -> Maybe (LNode String)
+nonStringNames :: [(StrLNode String, String)] -> Maybe (StrLNode String)
 nonStringNames nodeList =
 	let f x = readMaybe x :: Maybe Float
 	    nonStringNames = filter (isJust . f . snd) nodeList
@@ -77,13 +78,19 @@ nonStringNames nodeList =
 
 
 
-graspMainPresent :: [(LNode String, String)] -> Bool
+graspMainPresent :: [(StrLNode String, String)] -> Bool
 graspMainPresent = any (\x -> snd x == "grasp:main")
 
 
 
-constructGraph :: ([LNode String],[LEdge String]) -> GraspProgram
-constructGraph = uncurry Graph.mkGraph
+constructGraph :: GraspData -> GraspProgram
+constructGraph (sn, se) =
+	let strNodeList = map fst sn
+	    nmap = Map.fromList (zip strNodeList [1..])
+	    change x = fromJust (Map.lookup x nmap)
+	    n = map (\(x,y) -> (change x, y)) sn
+	    e = map (\(x,y,z) -> (change x, change y, z)) se
+	in Graph.mkGraph n e
 
 
 
@@ -131,7 +138,7 @@ edge = do
 ident = do
 	d <- some digit
 	inLineWhSp
-	return (read d)
+	return d
 
 
 labelAttrib = do
