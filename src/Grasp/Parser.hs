@@ -136,7 +136,7 @@ edge = do
 
 
 ident = do
-	d <- some digit
+	d <- some (noneOf " \t\r\n")
 	inLineWhSp
 	return d
 
