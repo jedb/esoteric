@@ -14,6 +14,7 @@ import Data.Graph.Inductive.Graph as Graph
 import Data.Graph.Inductive.Tree
 import Data.List
 import Data.Maybe
+import Data.Char
 import qualified Data.Map as Map
 import Grasp.Types
 
@@ -116,70 +117,141 @@ dup x =
 
 grasp = do
 	string "digraph {"
-	whiteSpace
-	(n,e) <- stmtList ([],[])
+	whiteSpac'
+	(n,e) <- stmtLis' ([],[])
 	string "}"
-	eol
+	eo'
 	eof
 	return (n,e)
+
+
+stmtLis' (n,e) =
+	    try (nod' >>= (\x -> stmtLis' (x:n,e)) )
+	<|> try (edg' >>= (\x -> stmtLis' (n,x:e)) )
+	<|> return (reverse n, reverse e)
+
+
+nod' = do
+	i <- iden'
+	l <- labelAttri'
+	whiteSpac'
+	return (i,l)
+
+
+edg' = do
+	a <- iden'
+	directedEdg'
+	b <- iden'
+	l <- labelAttri'
+	whiteSpac'
+	return (a,b,l)
+
+
+iden' = do
+	d <- some (noneOf " \t\r\n")
+	inLineWhS'
+	return d
+
+
+labelAttri' = do
+	char '['
+	inLineWhS'
+	string "label=\""
+	l <- labelI'
+	char '\"'
+	inLineWhS'
+	string "];"
+	return l
+
+
+labelI' = some (noneOf "\"\r\n\\" <|> escapedCha')
+
+
+escapedCha'  =  try (string "\\\"" >> return '\"')
+            <|> try (string "\\\\" >> return '\\')
+
+
+directedEdg' = string "->" >> inLineWhS'
+
+
+inLineWhS' = many (oneOf "\t ")
+whiteSpac' = many (oneOf "\n\r\t ")
+
+
+eo'  =  try (string "\r\n")
+    <|> try (string "\n\r")
+    <|> try (string "\n")
+    <|> try (string "\r")
+    <?> "end of line"
+
+
+
+
+-- work in progress more complete DOT language parser below this point
+
+graspDOT = do
+	optional strict
+	graphType
+	ident
+	openBrace
+	(n,e) <- stmtList ([],[])
+	closeBrace
+	eof
+	return (n,e)
+
+
+strict = caseInsensitiveString "strict"
+
+
+graphType = try (caseInsensitiveString "digraph") <?> "digraph"
+
+
+ident = (try alphaNumString)
+    <|> (try numeral)
+    <|> (try quotedString)
+    <?> "ID"
 
 
 stmtList (n,e) =
 	    try (node >>= (\x -> stmtList (x:n,e)) )
 	<|> try (edge >>= (\x -> stmtList (n,x:e)) )
+	<|> try (attr >> stmtList (n,e))
+	<|> try (subgraph >>= (\(x,y) -> stmtList (x ++ n, y ++ e)) )
 	<|> return (reverse n, reverse e)
 
 
-node = do
-	i <- ident
-	l <- labelAttrib
-	whiteSpace
-	return (i,l)
+-- todo
+alphaNumString = return "a"
 
 
-edge = do
-	a <- ident
-	directedEdge
-	b <- ident
-	l <- labelAttrib
-	whiteSpace
-	return (a,b,l)
+-- todo
+numeral = return "0"
 
 
-ident = do
-	d <- some (noneOf " \t\r\n")
-	inLineWhSp
-	return d
+-- todo
+quotedString = return "\""
 
 
-labelAttrib = do
-	char '['
-	inLineWhSp
-	string "label=\""
-	l <- labelID
-	char '\"'
-	inLineWhSp
-	string "];"
-	return l
+-- todo
+node = return ("1","a")
 
 
-labelID = some (noneOf "\"\r\n\\" <|> escapedChar)
+-- todo
+edge = return ("1","2","b")
 
 
-escapedChar  =  try (string "\\\"" >> return '\"')
-            <|> try (string "\\\\" >> return '\\')
+-- todo
+attr = return ""
 
 
-directedEdge = string "->" >> inLineWhSp
+-- todo
+subgraph = return ([],[])
 
 
-inLineWhSp = many (oneOf "\t ")
-whiteSpace = many (oneOf "\n\r\t ")
+openBrace = char '{'
+closeBrace = char '}'
 
 
-eol  =  try (string "\r\n")
-    <|> try (string "\n\r")
-    <|> try (string "\n")
-    <|> try (string "\r")
-    <?> "end of line"
+caseInsensitiveChar c = char (toLower c) <|> char (toUpper c)
+caseInsensitiveString s = mapM caseInsensitiveChar s
 
