@@ -36,7 +36,18 @@ parseGrasp input =
 
 
 sanityCheck :: GraspData -> Either ParseError GraspData
-sanityCheck (nodeList, edgeList) = Right (nodeList, edgeList)
+sanityCheck (nodeList, edgeList) =
+	let n = map fst nodeList
+
+	    a = multiCheck nodeList
+	    b = filter (\(x,y,_) -> x `notElem` n || y `notElem` n) edgeList
+
+	in case (a,b) of
+		(Just x,_) -> Left (newErrorMessage (Message ("multiple declaration of node " ++ (show x))) (newPos "" 0 0))
+
+		(_,(x:_)) -> Left (newErrorMessage (Message ("edge " ++ (show x) ++ " is unconnected")) (newPos "" 0 0))
+
+		_ -> Right (nodeList, edgeList)
 
 
 
@@ -50,7 +61,7 @@ nameCheck (nodeList, edgeList) =
 
 	    namedNodes = map mapFunc nameEdges
 
-	    a = multiNames namedNodes
+	    a = multiCheck namedNodes
 	    b = nonStringNames namedNodes
 	    c = graspMainPresent namedNodes
 
@@ -61,16 +72,16 @@ nameCheck (nodeList, edgeList) =
 
 		(_,_,False) -> Left (newErrorMessage (Message "could not find grasp:main") (newPos "" 0 0))
 
-		(_,_,_) -> Right (nodeList, edgeList)
+		_ -> Right (nodeList, edgeList)
 
 
 
-multiNames :: [(StrLNode String, String)] -> Maybe (StrLNode String)
-multiNames = dup . (map fst)
+multiCheck :: (Eq a) => [(a, b)] -> Maybe a
+multiCheck = dup . (map fst)
 
 
 
-nonStringNames :: [(StrLNode String, String)] -> Maybe (StrLNode String)
+nonStringNames :: (Eq a) => [(a, String)] -> Maybe a
 nonStringNames nodeList =
 	let f x = readMaybe x :: Maybe Float
 	    nonStringNames = filter (isJust . f . snd) nodeList
@@ -78,7 +89,7 @@ nonStringNames nodeList =
 
 
 
-graspMainPresent :: [(StrLNode String, String)] -> Bool
+graspMainPresent :: [(a, String)] -> Bool
 graspMainPresent = any (\x -> snd x == "grasp:main")
 
 
