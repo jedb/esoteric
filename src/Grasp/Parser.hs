@@ -187,12 +187,43 @@ eo'  =  try (string "\r\n")
 
 
 
+
+removeComments = gline `sepEndBy` eol >>= return . concat
+
+
+eol  =  try (string "\r\n")
+    <|> try (string "\n\r")
+    <|> try (string "\n")
+    <|> try (string "\r")
+    <?> "end of line"
+
+
+gline = many thing >>= return . concat
+
+
+thing = try (some (noneOf "\r\n\"/#"))
+    <|> try (quotedString >>= return . ("\"" ++) . (++ "\""))
+    <|> try singleLineComment
+    <|> try multiLineComment
+    <|> (anyChar >>= return . (:[]) )
+
+
+singleLineComment =
+	    (string "//" >> many (noneOf "\r\n") >> return "")
+	<|> (string "#" >> many (noneOf "\r\n") >> return "")
+
+
+multiLineComment = do
+	string "/*"
+	many (noneOf "*" <|> (char '*' >> notFollowedBy (char '/') >> return '*'))
+	return ""
+
 -- work in progress more complete DOT language parser below this point
 
 graspDOT = do
 	optional strict
 	graphType
-	ident
+	optional ident
 	openBrace
 	(n,e) <- stmtList ([],[])
 	closeBrace
@@ -200,15 +231,15 @@ graspDOT = do
 	return (n,e)
 
 
-strict = caseInsensitiveString "strict"
+strict = caseInsensitiveString "strict" >>= (\x -> whiteSpace >> return x)
 
 
-graphType = try (caseInsensitiveString "digraph") <?> "digraph"
+graphType = try (caseInsensitiveString "digraph" >>= (\x -> whiteSpace >> return x)) <?> "digraph"
 
 
-ident = (try alphaNumString)
-    <|> (try numeral)
-    <|> (try quotedString)
+ident = ((try alphaNumString)
+    <|>  (try numeral)
+    <|>  (try quotedString)) >>= (\x -> whiteSpace >> return x)
     <?> "ID"
 
 
@@ -217,7 +248,11 @@ stmtList (n,e) =
 	<|> try (edge >>= (\x -> stmtList (n,x:e)) )
 	<|> try (attr >> stmtList (n,e))
 	<|> try (subgraph >>= (\(x,y) -> stmtList ((reverse x) ++ n, (reverse y) ++ e)) )
+	<|> try (blankLine >> stmtList (n,e))
 	<|> return (reverse n, reverse e)
+
+
+blankLine = whiteSpace >> eol
 
 
 alphaNumString = do
@@ -262,7 +297,7 @@ edge = do
 	return (a,b,c)
 
 
-edgeOp = string "->"
+edgeOp = string "->" >> whiteSpace >> return "->"
 
 
 attr = attrType >> attrList
@@ -284,18 +319,20 @@ aList = do
 	openBracket
 	a <- many equAttr
 	closeBracket
+	whiteSpace
 	return a
 
 
 equAttr = do
 	e <- equ
 	optional (char ';' <|> char ',')
+	whiteSpace
 	return e
 
 
 equ = do
 	a <- ident
-	char '='
+	equalsChar
 	b <- ident
 	return (a,b)
 
@@ -305,15 +342,20 @@ subgraph = do
 	openBrace
 	(n,e) <- stmtList ([],[])
 	closeBrace
+	whiteSpace
 	return (n,e)
 
 
-openBrace = char '{'
-closeBrace = char '}'
-openBracket = char '['
-closeBracket = char ']'
+openBrace = char '{' >> whiteSpace >> return '{'
+closeBrace = char '}' >> whiteSpace >> return '}'
+openBracket = char '[' >> whiteSpace >> return '['
+closeBracket = char ']' >> whiteSpace >> return ']'
+equalsChar = char '='
 
 
 caseInsensitiveChar c = char (toLower c) <|> char (toUpper c)
 caseInsensitiveString s = mapM caseInsensitiveChar s
+
+
+whiteSpace = many (oneOf " \t")
 
