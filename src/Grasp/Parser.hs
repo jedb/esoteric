@@ -32,7 +32,11 @@ type GraspData = ([StrLNode String],[StrLEdge String])
 
 parseGrasp :: String -> Either ParseError GraspProgram
 parseGrasp input =
-	parse grasp "error" input >>= sanityCheck >>= nameCheck >>= return . constructGraph
+	parse removeComments "error" input >>=
+	parse graspDOT "error" >>=
+	sanityCheck >>=
+	nameCheck >>=
+	return . constructGraph
 
 
 
@@ -115,78 +119,7 @@ dup x =
 
 
 
-grasp = do
-	string "digraph {"
-	whiteSpac'
-	(n,e) <- stmtLis' ([],[])
-	string "}"
-	eo'
-	eof
-	return (n,e)
-
-
-stmtLis' (n,e) =
-	    try (nod' >>= (\x -> stmtLis' (x:n,e)) )
-	<|> try (edg' >>= (\x -> stmtLis' (n,x:e)) )
-	<|> return (reverse n, reverse e)
-
-
-nod' = do
-	i <- iden'
-	l <- labelAttri'
-	whiteSpac'
-	return (i,l)
-
-
-edg' = do
-	a <- iden'
-	directedEdg'
-	b <- iden'
-	l <- labelAttri'
-	whiteSpac'
-	return (a,b,l)
-
-
-iden' = do
-	d <- some (noneOf " \t\r\n")
-	inLineWhS'
-	return d
-
-
-labelAttri' = do
-	char '['
-	inLineWhS'
-	string "label=\""
-	l <- labelI'
-	char '\"'
-	inLineWhS'
-	string "];"
-	return l
-
-
-labelI' = some (noneOf "\"\r\n\\" <|> escapedCha')
-
-
-escapedCha'  =  try (string "\\\"" >> return '\"')
-            <|> try (string "\\\\" >> return '\\')
-
-
-directedEdg' = string "->" >> inLineWhS'
-
-
-inLineWhS' = many (oneOf "\t ")
-whiteSpac' = many (oneOf "\n\r\t ")
-
-
-eo'  =  try (string "\r\n")
-    <|> try (string "\n\r")
-    <|> try (string "\n")
-    <|> try (string "\r")
-    <?> "end of line"
-
-
-
-
+-- removes comments but otherwise leaves input unchanged
 
 removeComments = gline `sepEndBy` eol >>= return . concat
 
@@ -218,7 +151,9 @@ multiLineComment = do
 	many (noneOf "*" <|> (char '*' >> notFollowedBy (char '/') >> return '*'))
 	return ""
 
--- work in progress more complete DOT language parser below this point
+
+
+-- parses a DOT graph language file into the data for a grasp program
 
 graspDOT = do
 	optional strict
@@ -227,6 +162,7 @@ graspDOT = do
 	openBrace
 	(n,e) <- stmtList ([],[])
 	closeBrace
+	many blankLine
 	eof
 	return (n,e)
 
@@ -244,10 +180,10 @@ ident = ((try alphaNumString)
 
 
 stmtList (n,e) =
-	    try (node >>= (\x -> stmtList (x:n,e)) )
-	<|> try (edge >>= (\x -> stmtList (n,x:e)) )
-	<|> try (attr >> stmtList (n,e))
-	<|> try (subgraph >>= (\(x,y) -> stmtList ((reverse x) ++ n, (reverse y) ++ e)) )
+	    try (whiteSpace >> node >>= (\x -> stmtList (x:n,e)) )
+	<|> try (whiteSpace >> edge >>= (\x -> stmtList (n,x:e)) )
+	<|> try (whiteSpace >> attr >> stmtList (n,e))
+	<|> try (whiteSpace >> subgraph >>= (\(x,y) -> stmtList ((reverse x) ++ n, (reverse y) ++ e)) )
 	<|> try (blankLine >> stmtList (n,e))
 	<|> return (reverse n, reverse e)
 
@@ -286,6 +222,8 @@ quotedChar = noneOf "\"\r\n" <|> try (char '\\' >> char '\"')
 node = do
 	n <- ident
 	a <- attrList
+	optional (char ';')
+	whiteSpace
 	return (n,a)
 
 
@@ -294,16 +232,18 @@ edge = do
 	edgeOp
 	b <- ident
 	c <- attrList
+	optional (char ';')
+	whiteSpace
 	return (a,b,c)
 
 
 edgeOp = string "->" >> whiteSpace >> return "->"
 
 
-attr = attrType >> attrList
-attrType =  caseInsensitiveString "graph"
+attr = attrType >> attrList >> optional (char ';') >> whiteSpace
+attrType = (caseInsensitiveString "graph"
         <|> caseInsensitiveString "node"
-        <|> caseInsensitiveString "edge"
+        <|> caseInsensitiveString "edge") >>= (\x -> whiteSpace >> return x)
 
 
 attrList = do
@@ -342,6 +282,7 @@ subgraph = do
 	openBrace
 	(n,e) <- stmtList ([],[])
 	closeBrace
+	optional (char ';')
 	whiteSpace
 	return (n,e)
 
