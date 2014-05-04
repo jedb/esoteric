@@ -216,40 +216,102 @@ stmtList (n,e) =
 	    try (node >>= (\x -> stmtList (x:n,e)) )
 	<|> try (edge >>= (\x -> stmtList (n,x:e)) )
 	<|> try (attr >> stmtList (n,e))
-	<|> try (subgraph >>= (\(x,y) -> stmtList (x ++ n, y ++ e)) )
+	<|> try (subgraph >>= (\(x,y) -> stmtList ((reverse x) ++ n, (reverse y) ++ e)) )
 	<|> return (reverse n, reverse e)
 
 
--- todo
-alphaNumString = return "a"
+alphaNumString = do
+	a <- nonDigitChar
+	b <- many alphaNumChar
+	return (a:b)
 
 
--- todo
-numeral = return "0"
+nonDigitChar = letter <|> char '_'
+alphaNumChar = alphaNum <|> char '_'
 
 
--- todo
-quotedString = return "\""
+numeral = try negativeNum <|> positiveNum
+negativeNum = char '-' >> positiveNum >>= return . ('-':)
+positiveNum = try pointNum <|> try floatNum <|> wholeNum
+pointNum = char '.' >> some digit >>= return . ('.':)
+wholeNum = some digit
+floatNum = do { a <- some digit; char '.'; b <- many digit; return (a ++ "." ++ b)}
 
 
--- todo
-node = return ("1","a")
+quotedString = do
+	char '\"'
+	s <- some quotedChar
+	char '\"'
+	return s
 
 
--- todo
-edge = return ("1","2","b")
+quotedChar = noneOf "\"\r\n" <|> try (char '\\' >> char '\"')
 
 
--- todo
-attr = return ""
+node = do
+	n <- ident
+	a <- attrList
+	return (n,a)
 
 
--- todo
-subgraph = return ([],[])
+edge = do
+	a <- ident
+	edgeOp
+	b <- ident
+	c <- attrList
+	return (a,b,c)
+
+
+edgeOp = string "->"
+
+
+attr = attrType >> attrList
+attrType =  caseInsensitiveString "graph"
+        <|> caseInsensitiveString "node"
+        <|> caseInsensitiveString "edge"
+
+
+attrList = do
+	a <- many aList
+	let r = filter (\x -> fst x == "label") (concat a)
+	case (length r) of
+		0 -> fail "expected node/edge label"
+		1 -> return . snd . head $ r
+		_ -> fail "unexpected multiple labels for single node/edge"
+
+
+aList = do
+	openBracket
+	a <- many equAttr
+	closeBracket
+	return a
+
+
+equAttr = do
+	e <- equ
+	optional (char ';' <|> char ',')
+	return e
+
+
+equ = do
+	a <- ident
+	char '='
+	b <- ident
+	return (a,b)
+
+
+subgraph = do
+	optional (caseInsensitiveString "subgraph" >> optional ident)
+	openBrace
+	(n,e) <- stmtList ([],[])
+	closeBrace
+	return (n,e)
 
 
 openBrace = char '{'
 closeBrace = char '}'
+openBracket = char '['
+closeBracket = char ']'
 
 
 caseInsensitiveChar c = char (toLower c) <|> char (toUpper c)
