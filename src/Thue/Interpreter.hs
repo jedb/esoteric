@@ -1,4 +1,6 @@
 module Thue.Interpreter (
+    Choice(..),
+
     thue,
     extractInfix,
     nextInRange
@@ -18,14 +20,15 @@ data Choice = Random StdGen
 
 
 
-thue :: ThueProgram -> IO ThueState
-thue program =
+thue :: ThueProgram -> Maybe Choice -> IO ThueState
+thue program order =
     let rules = thueRules program
         state = thueInitialState program
         version = thueVersion program
         gen = mkStdGen 4 --chosen by fair dice roll, guaranteed to be random
+        choice = if (isJust order) then fromJust order else Random gen
 
-    in interpret version rules (Random gen) state
+    in interpret version rules choice state
 
 
 
