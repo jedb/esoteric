@@ -5,6 +5,18 @@ Usage of each interpreter is of the form:
 
 
 
+The Thue interpreter also has several command line switches:
+
+    -l      --left      Evaluates applicable rules left to right
+    -r      --right     Evaluates applicable rules right to left
+    -a      --random    Evaluetes applicable rules randomly (default)
+
+    -1      --ver1      Uses the version 1 parser/interpreter (default)
+    -2      --ver2a     Uses the version 2a parser/interpreter
+
+
+
+
 
 Fractran file format is one integer followed by an arbitrary number of
 fractions of the form a/b where both a and b are integers and b is not 0.
