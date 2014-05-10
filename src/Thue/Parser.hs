@@ -76,6 +76,7 @@ fromThueState = map tChar
 
 
 thue ver = do
+	many blankLine
 	rs <- many (rule ver)
 	separatorLine
 	i <- initialState ver
@@ -88,7 +89,11 @@ rule ver = do
 	separator
 	r <- state ver
 	eol
+	many blankLine
 	return (ThueRule o r)
+
+
+blankLine = many (oneOf " \t") >> eol
 
 
 separatorLine = separator >> eol
