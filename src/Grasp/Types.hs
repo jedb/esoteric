@@ -1,6 +1,7 @@
 module Grasp.Types (
 	GraspProgram(..),
 
+    namedNodes,
 	nodesWithName,
 	normalise,
 	iso
@@ -25,6 +26,18 @@ instance (Ord a, Ord b) => Eq (Gr a b) where
 	a == b  =   ((sort . Graph.labNodes $ a) == (sort . Graph.labNodes $ b)) &&
 	            ((sort . Graph.labEdges $ a) == (sort . Graph.labEdges $ b))
 
+
+
+
+namedNodes :: GraspProgram -> [LNode String]
+namedNodes g =
+	let nodes = Graph.labNodes g
+	    edges = Graph.labEdges g
+
+	    nameEdges = filter (\(_,_,z) -> z == "name") edges
+	    nameNodes = map (\(x,_,_) -> x) nameEdges
+
+	in filter (\(x,_) -> x `elem` nameNodes) nodes
 
 
 
