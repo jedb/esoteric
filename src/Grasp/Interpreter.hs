@@ -3,6 +3,8 @@ module Grasp.Interpreter (
     ) where
 
 
+import Data.Graph.Inductive.Graph( Node, LNode, LEdge, (&) )
+import qualified Data.Graph.Inductive.Graph as Graph
 import Grasp.Types
 import Grasp.Parser
 
@@ -20,13 +22,16 @@ grasp g =
 
 
 
-reachable :: GraspProgram -> [LNode String]
+reachable :: GraspProgram -> [Node]
 reachable g = []
 
 
 
 garbageCollect :: GraspProgram -> GraspProgram
-garbageCollect g = g
+garbageCollect g =
+	let unreachable = (Graph.nodes g) \\ (reachable g)
+	in Graph.delNodes unreachable g
+
 
 
 
