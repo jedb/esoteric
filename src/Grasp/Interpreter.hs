@@ -5,7 +5,7 @@ module Grasp.Interpreter (
 
 import Data.Graph.Inductive.Graph( Node, LNode, LEdge, (&) )
 import qualified Data.Graph.Inductive.Graph as Graph
-import qualified Data.Set as Set
+import Data.List
 import Grasp.Types
 import Grasp.Parser
 
@@ -24,7 +24,19 @@ grasp g =
 
 
 reachable :: GraspProgram -> [IP] -> [Node]
-reachable g ips = Graph.nodes g
+reachable g ips =
+	let startNodes = nub . (map fst) $ (namedNodes g) ++ (concat ips)
+	in reach g startNodes []
+
+
+
+reach :: GraspProgram -> [Node] -> [Node] -> [Node]
+reach _ [] f = f
+reach g s@(x:xs) f =
+	let f' = nub (x:f)
+	    s' = nub (xs ++ (Graph.suc g x))
+	    g' = Graph.delNode x g
+	in reach g' s' f'
 
 
 
