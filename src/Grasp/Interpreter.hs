@@ -5,6 +5,7 @@ module Grasp.Interpreter (
 
 import Data.Graph.Inductive.Graph( Node, LNode, LEdge, (&) )
 import qualified Data.Graph.Inductive.Graph as Graph
+import qualified Data.Set as Set
 import Grasp.Types
 import Grasp.Parser
 
@@ -22,14 +23,14 @@ grasp g =
 
 
 
-reachable :: GraspProgram -> [Node]
-reachable g = []
+reachable :: GraspProgram -> [IP] -> [Node]
+reachable g ips = Graph.nodes g
 
 
 
-garbageCollect :: GraspProgram -> GraspProgram
-garbageCollect g =
-	let unreachable = (Graph.nodes g) \\ (reachable g)
+garbageCollect :: GraspProgram -> [IP] -> GraspProgram
+garbageCollect g ips =
+	let unreachable = (Graph.nodes g) \\ (reachable g ips)
 	in Graph.delNodes unreachable g
 
 
