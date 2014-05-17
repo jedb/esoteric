@@ -235,7 +235,7 @@ addmulI f g ip = do
     g' <- case argL of
             x | not (all isFloat x) -> error ("Instruction " ++ (show node) ++
                                             " has non numeric arguments")
-            x -> let s = f . map (read :: String -> Float) $ x
+            x -> let s = f . (map read) $ x
                  in return (foldl' (\gr n -> reLabel gr n (show s)) g outN)
 
     ip' <- updateIP ip nextLN
@@ -245,10 +245,35 @@ addmulI f g ip = do
 
 
 subI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-subI g ip = return (g,ip)
+subI = subdivI (\a b -> a - (sum b))
 
 divI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-divI g ip = return (g,ip)
+divI = subdivI (\a b -> a / (product b))
+
+subdivI :: (Float -> [Float] -> Float) -> GraspProgram -> IP -> IO (GraspProgram, IP)
+subdivI f g ip = do
+    let node = fst . head $ ip
+        edges = Graph.out g node
+
+        leftL = targetLabels g (getByLabel "left" edges)
+        rightL = targetLabels g (getByLabel "right" edges)
+        outN = targetNodes (getByLabel "out" edges)
+        nextLN = targetLNodes g (getByLabel "next" edges)
+
+    g' <- case (leftL, rightL) of
+            (x,_) | length x /= 1 -> error ("Instruction " ++ (show node) ++
+                                            " lacks a left edge")
+            (x,y) | not (all isFloat x && all isFloat y) ->
+                                    error ("Instruction " ++ (show node) ++
+                                            " has non numeric arguments")
+            (x,y) -> let s = f (read . head $ x) (map read y)
+                     in return (foldl' (\gr n -> reLabel gr n (show s)) g outN)
+
+    ip' <- updateIP ip nextLN
+
+    return (g',ip')
+
+
 
 modI :: GraspProgram -> IP -> IO (GraspProgram, IP)
 modI g ip = return (g,ip)
