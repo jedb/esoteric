@@ -218,7 +218,13 @@ retI g ip = return (g,ip)
 
 
 addI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-addI g ip = do
+addI = addmulI sum
+
+mulI :: GraspProgram -> IP -> IO (GraspProgram, IP)
+mulI = addmulI product
+
+addmulI :: ([Float] -> Float) -> GraspProgram -> IP -> IO (GraspProgram, IP)
+addmulI f g ip = do
     let node = fst . head $ ip
         edges = Graph.out g node
 
@@ -229,7 +235,7 @@ addI g ip = do
     g' <- case argL of
             x | not (all isFloat x) -> error ("Instruction " ++ (show node) ++
                                             " has non numeric arguments")
-            x -> let s = sum . map (read :: String -> Float) $ x
+            x -> let s = f . map (read :: String -> Float) $ x
                  in return (foldl' (\gr n -> reLabel gr n (show s)) g outN)
 
     ip' <- updateIP ip nextLN
@@ -237,9 +243,6 @@ addI g ip = do
     return (g',ip')
 
 
-
-mulI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-mulI g ip = return (g,ip)
 
 subI :: GraspProgram -> IP -> IO (GraspProgram, IP)
 subI g ip = return (g,ip)
