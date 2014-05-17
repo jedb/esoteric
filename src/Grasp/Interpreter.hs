@@ -180,7 +180,25 @@ newI g ip = do
 
 
 delI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-delI g ip = return (g,ip)
+delI g ip = do
+    let node = fst . head $ ip
+        edges = Graph.out g node
+
+        tailN = targetNodes (getByLabel "tail" edges)
+        headN = targetNodes (getByLabel "head" edges)
+        labelL = targetLabels g (getByLabel "label" edges)
+
+        edgesToDel = filter (\(x,y,z) -> x `elem` tailN &&
+                                        (headN == [] || y `elem` headN) &&
+                                        (labelL == [] || z `elem` labelL)) (Graph.labEdges g)
+
+        g' = foldl' (\gr e -> Graph.delLEdge e gr) g edgesToDel
+
+    ip' <- updateIP ip (targetLNodes g' (getByLabel "next" (Graph.out g' node)))
+
+    return (g',ip')
+
+
 
 pushI :: GraspProgram -> IP -> IO (GraspProgram, IP)
 pushI g ip = return (g,ip)
