@@ -145,7 +145,7 @@ setI g ip = do
     g' <- case inL of
             [] -> return g
             _ -> (getStdRandom (randomR (0,length inL))) >>=
-                (\x -> return (foldl' (\g n -> reLabel g n (inL !! x)) g outN) )
+                (\x -> return (foldl' (\gr n -> reLabel gr n (inL !! x)) g outN) )
     
     ip' <- updateIP ip nextLN
 
@@ -215,8 +215,28 @@ callI g ip = return (g,ip)
 retI :: GraspProgram -> IP -> IO (GraspProgram, IP)
 retI g ip = return (g,ip)
 
+
+
 addI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-addI g ip = return (g,ip)
+addI g ip = do
+    let node = fst . head $ ip
+        edges = Graph.out g node
+
+        argL = targetLabels g (getByLabel "arg" edges)
+        outN = targetNodes (getByLabel "out" edges)
+        nextLN = targetLNodes g (getByLabel "next" edges)
+
+    g' <- case argL of
+            x | not (all isFloat x) -> error ("Instruction " ++ (show node) ++
+                                            " has non numeric arguments")
+            x -> let s = sum . map (read :: String -> Float) $ x
+                 in return (foldl' (\gr n -> reLabel gr n (show s)) g outN)
+
+    ip' <- updateIP ip nextLN
+
+    return (g',ip')
+
+
 
 mulI :: GraspProgram -> IP -> IO (GraspProgram, IP)
 mulI g ip = return (g,ip)
