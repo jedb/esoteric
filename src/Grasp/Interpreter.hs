@@ -335,7 +335,42 @@ getcI g ip = do
 
 
 putcI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-putcI g ip = return (g,ip)
+putcI g ip = do
+    let node = fst . head $ ip
+        edges = Graph.out g node
+
+        inL = targetLabels g (getByLabel "in" edges)
+        fhL = targetLabels g (getByLabel "fh" edges)
+        nextLN = targetLNodes g (getByLabel "next" edges)
+
+    r <- getStdRandom (randomR (0, length inL))
+
+    c <- case inL of
+            x | length x == 0 ->
+                        error ("Instruction " ++ (show node) ++
+                                " must have at least one in edge")
+
+            x | not (isFloat $ inL!!r) ->
+                        error ("Randomly chosen in edge to " ++ (show node) ++
+                                " does not contain a number")
+
+            x -> return . chr . read $ inL!!r
+
+    fh <- case fhL of
+            x | length x == 0 -> return stdout
+
+            x | length x == 1 -> openFile (head fhL) AppendMode
+
+            x -> error ("Instruction " ++ (show node) ++
+                        " may only have one file handle")
+
+    hPutChar fh c
+
+    ip' <- updateIP ip nextLN
+
+    return (g,ip')
+
+
 
 getsI :: GraspProgram -> IP -> IO (GraspProgram, IP)
 getsI g ip = return (g,ip)
