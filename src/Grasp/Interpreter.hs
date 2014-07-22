@@ -292,9 +292,9 @@ modI g ip = do
                             error ("Instruction " ++ (show node) ++ " requires " ++
                                     "a single left edge and a single right edge")
 
-            (x,y) | not (all isFloat x && all isFloat y) ->
+            (x,y) | not (all isInteger x && all isInteger y) ->
                             error ("Instruction " ++ (show node) ++
-                                    " has non numeric arguments")
+                                    " has non integer arguments")
 
             (x,y) -> let s = (read . head $ x) `mod` (read . head $ y)
                      in return (foldl' (\gr n -> reLabel gr n (show s)) g outN)
@@ -350,9 +350,9 @@ putcI g ip = do
                         error ("Instruction " ++ (show node) ++
                                 " must have at least one in edge")
 
-            x | not (isFloat $ inL!!r) ->
+            x | not (isInteger $ inL!!r) ->
                         error ("Randomly chosen in edge to " ++ (show node) ++
-                                " does not contain a number")
+                                " does not contain an integer")
 
             x -> return . chr . read $ inL!!r
 
