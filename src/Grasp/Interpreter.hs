@@ -276,7 +276,32 @@ subdivI f g ip = do
 
 
 modI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-modI g ip = return (g,ip)
+modI g ip = do
+    let node = fst . head $ ip
+        edges = Graph.out g node
+
+        leftL = targetLabels g (getByLabel "left" edges)
+        rightL = targetLabels g (getByLabel "right" edges)
+        outN = targetNodes (getByLabel "out" edges)
+        nextLN = targetLNodes g (getByLabel "next" edges)
+
+    g' <- case (leftL, rightL) of
+            (x,y) | length x /= 1 || length y /= 1 ->
+                            error ("Instruction " ++ (show node) ++ " requires " ++
+                                    "a single left edge and a single right edge")
+
+            (x,y) | not (all isFloat x && all isFloat y) ->
+                            error ("Instruction " ++ (show node) ++
+                                    " has non numeric arguments")
+
+            (x,y) -> let s = (read . head $ x) `mod` (read . head $ y)
+                     in return (foldl' (\gr n -> reLabel gr n (show s)) g outN)
+
+    ip' <- updateIP ip nextLN
+
+    return (g',ip')
+
+
 
 getcI :: GraspProgram -> IP -> IO (GraspProgram, IP)
 getcI g ip = return (g,ip)
