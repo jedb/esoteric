@@ -131,7 +131,7 @@ targetLNodes g = map (\(_,x,_) -> (x, fromJust (Graph.lab g x)) )
 updateIP :: IP -> [LNode String] -> IO IP
 updateIP _ [] = return []
 updateIP ip next =
-    getStdRandom (randomR (0,length next)) >>=
+    getStdRandom (randomR (0,length next - 1)) >>=
     (\x -> return ((next !! x):(tail ip)) )
 
 
@@ -146,7 +146,7 @@ setI g ip = do
     
     g' <- case inL of
             [] -> return g
-            _ -> (getStdRandom (randomR (0,length inL))) >>=
+            _ -> (getStdRandom (randomR (0,length inL - 1))) >>=
                 (\x -> return (foldl' (\gr n -> reLabel gr n (inL !! x)) g outN) )
     
     ip' <- updateIP ip nextLN
@@ -343,7 +343,7 @@ putcI g ip = do
         fhL = targetLabels g (getByLabel "fh" edges)
         nextLN = targetLNodes g (getByLabel "next" edges)
 
-    r <- getStdRandom (randomR (0, length inL))
+    r <- getStdRandom (randomR (0, length inL - 1))
 
     c <- case inL of
             x | length x == 0 ->
