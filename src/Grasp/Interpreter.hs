@@ -4,11 +4,13 @@ module Grasp.Interpreter (
 
 
 import System.Random
+import System.IO
 import Text.Read( readMaybe )
 import Data.Graph.Inductive.Graph( Node, LNode, LEdge, (&) )
 import qualified Data.Graph.Inductive.Graph as Graph
 import Data.List
 import Data.Maybe
+import Data.Char
 import Grasp.Types
 import Grasp.Parser
 
@@ -304,7 +306,33 @@ modI g ip = do
 
 
 getcI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-getcI g ip = return (g,ip)
+getcI g ip = do
+    let node = fst . head $ ip
+        edges = Graph.out g node
+
+        outN = targetNodes (getByLabel "out" edges)
+        fhL = targetLabels g (getByLabel "fh" edges)
+        nextLN = targetLNodes g (getByLabel "next" edges)
+
+    c <- case fhL of
+            x | length x == 0 -> getChar >>= return . ord
+
+            x | length x == 1 -> do
+                    h <- openFile (head fhL) ReadMode
+                    c <- hGetChar h
+                    hClose h
+                    return (ord c)
+
+            x -> error ("Instruction " ++ (show node) ++
+                        " may only have one file handle")
+
+    g' <- return (foldl' (\gr n -> reLabel gr n (show c)) g outN)
+
+    ip' <- updateIP ip nextLN
+
+    return (g',ip')
+
+
 
 putcI :: GraspProgram -> IP -> IO (GraspProgram, IP)
 putcI g ip = return (g,ip)
