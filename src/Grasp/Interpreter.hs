@@ -60,32 +60,44 @@ interpret g ips = if (ips == []) then return () else execute g ips []
 execute :: GraspProgram -> [IP] -> [IP] -> IO ()
 execute g [] out = interpret g (reverse out)
 execute g ([]:ips) out = execute g ips out
-execute g (cur:rest) out = do
-    (g', cur') <-
-            case (snd . head $ cur) of
-                "set" -> setI g cur
-                "new" -> newI g cur
-                "del" -> delI g cur
-                "push" -> pushI g cur
-                "pop" -> popI g cur
-                "pick" -> pickI g cur
-                "call" -> callI g cur
-                "ret" -> retI g cur
-                "add" -> addI g cur
-                "mul" -> mulI g cur
-                "sub" -> subI g cur
-                "div" -> divI g cur
-                "mod" -> modI g cur
-                "getc" -> getcI g cur
-                "putc" -> putcI g cur
-                "gets" -> getsI g cur
-                "puts" -> putsI g cur
+execute g (cur:rest) out =
+    let (node,instruction) = head cur
+        condL = targetLabels g (getByLabel "cond" (Graph.out g node))
+        goAhead = all (\x -> isJust (readMaybe x >>= return . (/= 0.0))) condL
 
-                x | isInteger x -> implicitPushI g cur
+    in case (goAhead, instruction) of
+        (False,_) -> do
+            cur' <- updateIP cur (targetLNodes g (getByLabel "next" (Graph.out g node)))
+            execute g rest (cur':out)
 
-                x -> error ("Unknown instruction at " ++ (show x))
+        (True,x) | x /= "call" && x /= "ret" -> do
+            g' <- case x of
+                    "set" -> setI g node
+                    "new" -> newI g node
+                    "del" -> delI g node
+                    "push" -> pushI g node
+                    "pop" -> popI g node
+                    "pick" -> pickI g node
+                    "add" -> addI g node
+                    "mul" -> mulI g node
+                    "sub" -> subI g node
+                    "div" -> divI g node
+                    "mod" -> modI g node
+                    "getc" -> getcI g node
+                    "putc" -> putcI g node
+                    "gets" -> getsI g node
+                    "puts" -> putsI g node
+                    inst | isInteger inst -> implicitPushI g node
+                    _ -> error ("Unknown instruction at " ++ (show x))
+            cur' <- updateIP cur (targetLNodes g' (getByLabel "next" (Graph.out g' node)))
+            execute g' rest (cur':out)
 
-    execute g' rest (cur':out)
+        (_,x) -> do
+            (g',cur') <- case x of
+                    "call" -> callI g cur
+                    "ret" -> retI g cur
+                    _ -> error ("Execute function reached impossible branch")
+            execute g' rest (cur':out)
 
 
 
@@ -136,55 +148,44 @@ updateIP ip next =
 
 
 
-setI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-setI g ip = do
-    let edges = Graph.out g (fst . head $ ip)
+setI :: GraspProgram -> Node -> IO GraspProgram
+setI g node =
+    let edges = Graph.out g node
 
         inL = targetLabels g (getByLabel "in" edges)
         outN = targetNodes (getByLabel "out" edges)
-        nextLN = targetLNodes g (getByLabel "next" edges)
-    
-    g' <- case inL of
-            [] -> return g
-            _ -> (getStdRandom (randomR (0,length inL - 1))) >>=
-                (\x -> return (foldl' (\gr n -> reLabel gr n (inL !! x)) g outN) )
-    
-    ip' <- updateIP ip nextLN
 
-    return (g',ip')
+    in case inL of
+        [] -> return g
+        _ -> (getStdRandom (randomR (0,length inL - 1))) >>=
+            (\x -> return (foldl' (\gr n -> reLabel gr n (inL !! x)) g outN) )
 
 
 
-newI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-newI g ip = do
-    let node = fst . head $ ip
-        edges = Graph.out g node
+newI :: GraspProgram -> Node -> IO GraspProgram
+newI g node =
+    let edges = Graph.out g node
 
         tailN = targetNodes (getByLabel "tail" edges)
         headN = targetNodes (getByLabel "head" edges)
         labelL = targetLabels g (getByLabel "label" edges)
 
-    g' <- case (tailN, headN, labelL) of
-            (x,_,_) | length x /= 1 -> error ("Instruction " ++ (show node) ++
-                                              " should only have one tail argument")
-            (_,y,_) | length y /= 1 -> error ("Instruction " ++ (show node) ++
-                                              " should only have one head argument")
-            (_,_,z) | length z /= 1 -> error ("Instruction " ++ (show node) ++
-                                              " should only have one label argument")
-            (_,_,z) | isFloat (head z) -> error ("Instruction " ++ (show node) ++
-                                                 " should have non-numeric label argument")
-            (x,y,z) -> return (Graph.insEdge (head x, head y, head z) g)
-
-    ip' <- updateIP ip (targetLNodes g' (getByLabel "next" (Graph.out g' node)))
-
-    return (g',ip')
+    in case (tailN, headN, labelL) of
+        (x,_,_) | length x /= 1 -> error ("Instruction " ++ (show node) ++
+                                            " should only have one tail argument")
+        (_,y,_) | length y /= 1 -> error ("Instruction " ++ (show node) ++
+                                            " should only have one head argument")
+        (_,_,z) | length z /= 1 -> error ("Instruction " ++ (show node) ++
+                                            " should only have one label argument")
+        (_,_,z) | isFloat (head z) -> error ("Instruction " ++ (show node) ++
+                                            " should have non-numeric label argument")
+        (x,y,z) -> return (Graph.insEdge (head x, head y, head z) g)
 
 
 
-delI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-delI g ip = do
-    let node = fst . head $ ip
-        edges = Graph.out g node
+delI :: GraspProgram -> Node -> IO GraspProgram
+delI g node =
+    let edges = Graph.out g node
 
         tailN = targetNodes (getByLabel "tail" edges)
         headN = targetNodes (getByLabel "head" edges)
@@ -194,22 +195,20 @@ delI g ip = do
                                         (headN == [] || y `elem` headN) &&
                                         (labelL == [] || z `elem` labelL)) (Graph.labEdges g)
 
-        g' = foldl' (\gr e -> Graph.delLEdge e gr) g edgesToDel
-
-    ip' <- updateIP ip (targetLNodes g' (getByLabel "next" (Graph.out g' node)))
-
-    return (g',ip')
+    in return (foldl' (\gr e -> Graph.delLEdge e gr) g edgesToDel)
 
 
 
-pushI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-pushI g ip = return (g,ip)
+pushI :: GraspProgram -> Node -> IO GraspProgram
+pushI g node = return g
 
-popI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-popI g ip = return (g,ip)
+popI :: GraspProgram -> Node -> IO GraspProgram
+popI g node = return g
 
-pickI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-pickI g ip = return (g,ip)
+pickI :: GraspProgram -> Node -> IO GraspProgram
+pickI g node = return g
+
+
 
 callI :: GraspProgram -> IP -> IO (GraspProgram, IP)
 callI g ip = return (g,ip)
@@ -219,100 +218,80 @@ retI g ip = return (g,ip)
 
 
 
-addI :: GraspProgram -> IP -> IO (GraspProgram, IP)
+addI :: GraspProgram -> Node -> IO GraspProgram
 addI = addmulI sum
 
-mulI :: GraspProgram -> IP -> IO (GraspProgram, IP)
+mulI :: GraspProgram -> Node -> IO GraspProgram
 mulI = addmulI product
 
-addmulI :: ([Float] -> Float) -> GraspProgram -> IP -> IO (GraspProgram, IP)
-addmulI f g ip = do
-    let node = fst . head $ ip
-        edges = Graph.out g node
+addmulI :: ([Float] -> Float) -> GraspProgram -> Node -> IO GraspProgram
+addmulI f g node =
+    let edges = Graph.out g node
 
         argL = targetLabels g (getByLabel "arg" edges)
         outN = targetNodes (getByLabel "out" edges)
-        nextLN = targetLNodes g (getByLabel "next" edges)
 
-    g' <- case argL of
-            x | not (all isFloat x) -> error ("Instruction " ++ (show node) ++
-                                            " has non numeric arguments")
-            x -> let s = f . (map read) $ x
-                 in return (foldl' (\gr n -> reLabel gr n (show s)) g outN)
-
-    ip' <- updateIP ip nextLN
-
-    return (g',ip')
+    in case argL of
+        x | not (all isFloat x) -> error ("Instruction " ++ (show node) ++
+                                        " has non numeric arguments")
+        x -> let s = f . (map read) $ x
+             in return (foldl' (\gr n -> reLabel gr n (show s)) g outN)
 
 
 
-subI :: GraspProgram -> IP -> IO (GraspProgram, IP)
+subI :: GraspProgram -> Node -> IO GraspProgram
 subI = subdivI (\a b -> a - (sum b))
 
-divI :: GraspProgram -> IP -> IO (GraspProgram, IP)
+divI :: GraspProgram -> Node -> IO GraspProgram
 divI = subdivI (\a b -> a / (product b))
 
-subdivI :: (Float -> [Float] -> Float) -> GraspProgram -> IP -> IO (GraspProgram, IP)
-subdivI f g ip = do
-    let node = fst . head $ ip
-        edges = Graph.out g node
+subdivI :: (Float -> [Float] -> Float) -> GraspProgram -> Node -> IO GraspProgram
+subdivI f g node =
+    let edges = Graph.out g node
 
         leftL = targetLabels g (getByLabel "left" edges)
         rightL = targetLabels g (getByLabel "right" edges)
         outN = targetNodes (getByLabel "out" edges)
-        nextLN = targetLNodes g (getByLabel "next" edges)
 
-    g' <- case (leftL, rightL) of
-            (x,_) | length x /= 1 -> error ("Instruction " ++ (show node) ++
-                                            " lacks a left edge")
-            (x,y) | not (all isFloat x && all isFloat y) ->
-                                    error ("Instruction " ++ (show node) ++
-                                            " has non numeric arguments")
-            (x,y) -> let s = f (read . head $ x) (map read y)
-                     in return (foldl' (\gr n -> reLabel gr n (show s)) g outN)
-
-    ip' <- updateIP ip nextLN
-
-    return (g',ip')
+    in case (leftL, rightL) of
+        (x,_) | length x /= 1 -> error ("Instruction " ++ (show node) ++
+                                        " lacks a left edge")
+        (x,y) | not (all isFloat x && all isFloat y) ->
+                                error ("Instruction " ++ (show node) ++
+                                        " has non numeric arguments")
+        (x,y) -> let s = f (read . head $ x) (map read y)
+                 in return (foldl' (\gr n -> reLabel gr n (show s)) g outN)
 
 
 
-modI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-modI g ip = do
-    let node = fst . head $ ip
-        edges = Graph.out g node
+modI :: GraspProgram -> Node -> IO GraspProgram
+modI g node =
+    let edges = Graph.out g node
 
         leftL = targetLabels g (getByLabel "left" edges)
         rightL = targetLabels g (getByLabel "right" edges)
         outN = targetNodes (getByLabel "out" edges)
-        nextLN = targetLNodes g (getByLabel "next" edges)
 
-    g' <- case (leftL, rightL) of
-            (x,y) | length x /= 1 || length y /= 1 ->
-                            error ("Instruction " ++ (show node) ++ " requires " ++
-                                    "a single left edge and a single right edge")
+    in case (leftL, rightL) of
+        (x,y) | length x /= 1 || length y /= 1 ->
+                        error ("Instruction " ++ (show node) ++ " requires " ++
+                                "a single left edge and a single right edge")
 
-            (x,y) | not (all isInteger x && all isInteger y) ->
-                            error ("Instruction " ++ (show node) ++
-                                    " has non integer arguments")
+        (x,y) | not (all isInteger x && all isInteger y) ->
+                        error ("Instruction " ++ (show node) ++
+                                " has non integer arguments")
 
-            (x,y) -> let s = (read . head $ x) `mod` (read . head $ y)
-                     in return (foldl' (\gr n -> reLabel gr n (show s)) g outN)
-
-    ip' <- updateIP ip nextLN
-
-    return (g',ip')
+        (x,y) -> let s = (read . head $ x) `mod` (read . head $ y)
+                 in return (foldl' (\gr n -> reLabel gr n (show s)) g outN)
 
 
 
-getcI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-getcI g ip = do
-    let node = fst . head $ ip
-        edges = Graph.out g node
+getcI :: GraspProgram -> Node -> IO GraspProgram
+getcI g node = do
+    let edges = Graph.out g node
 
         outN = targetNodes (getByLabel "out" edges)
         fhL = targetLabels g (getByLabel "fh" edges)
-        nextLN = targetLNodes g (getByLabel "next" edges)
 
     c <- case fhL of
             x | length x == 0 -> getChar >>= return . ord
@@ -326,22 +305,16 @@ getcI g ip = do
             x -> error ("Instruction " ++ (show node) ++
                         " may only have one file handle")
 
-    g' <- return (foldl' (\gr n -> reLabel gr n (show c)) g outN)
-
-    ip' <- updateIP ip nextLN
-
-    return (g',ip')
+    return (foldl' (\gr n -> reLabel gr n (show c)) g outN)
 
 
 
-putcI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-putcI g ip = do
-    let node = fst . head $ ip
-        edges = Graph.out g node
+putcI :: GraspProgram -> Node -> IO GraspProgram
+putcI g node = do
+    let edges = Graph.out g node
 
         inL = targetLabels g (getByLabel "in" edges)
         fhL = targetLabels g (getByLabel "fh" edges)
-        nextLN = targetLNodes g (getByLabel "next" edges)
 
     r <- getStdRandom (randomR (0, length inL - 1))
 
@@ -366,18 +339,16 @@ putcI g ip = do
 
     hPutChar fh c
 
-    ip' <- updateIP ip nextLN
-
-    return (g,ip')
+    return g
 
 
 
-getsI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-getsI g ip = return (g,ip)
+getsI :: GraspProgram -> Node -> IO GraspProgram
+getsI g node = return g
 
-putsI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-putsI g ip = return (g,ip)
+putsI :: GraspProgram -> Node -> IO GraspProgram
+putsI g node = return g
 
-implicitPushI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-implicitPushI g ip = return (g,ip)
+implicitPushI :: GraspProgram -> Node -> IO GraspProgram
+implicitPushI g node = return g
 
