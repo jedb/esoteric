@@ -66,7 +66,7 @@ execute g ([]:ips) out = execute g ips out
 execute g (cur:rest) out =
     let (node,instruction) = head cur
         condL = targetLabels g (getByLabel "cond" (Graph.out g node))
-        goAhead = all (\x -> isJust (readMaybe x >>= return . (/= 0.0))) condL
+        goAhead = all (\x -> isFloat x && (read :: String -> Float) x /= 0.0) condL
 
     in case (goAhead, instruction) of
         (False,_) -> do
