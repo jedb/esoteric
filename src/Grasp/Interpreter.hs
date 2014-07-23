@@ -3,6 +3,7 @@ module Grasp.Interpreter (
     ) where
 
 
+import Control.Monad
 import System.Random
 import System.IO
 import Text.Read( readMaybe )
@@ -338,6 +339,7 @@ putcI g node = do
                         " may only have one file handle")
 
     hPutChar fh c
+    when (fh /= stdout) (hClose fh)
 
     return g
 
