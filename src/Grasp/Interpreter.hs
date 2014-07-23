@@ -4,8 +4,10 @@ module Grasp.Interpreter (
 
 
 import Control.Monad
+import Control.Exception
 import System.Random
 import System.IO
+import System.IO.Error
 import Text.Read( readMaybe )
 import Data.Graph.Inductive.Graph( Node, LNode, LEdge, (&) )
 import qualified Data.Graph.Inductive.Graph as Graph
@@ -295,13 +297,16 @@ getcI g node = do
         fhL = targetLabels g (getByLabel "fh" edges)
 
     c <- case fhL of
-            x | length x == 0 -> getChar >>= return . ord
+            x | length x == 0 -> getChar >>=
+                (\x -> if (x == '\EOT') then return (-1) else return (ord x))
 
             x | length x == 1 -> do
                     h <- openFile (head fhL) ReadMode
-                    c <- hGetChar h
+                    input <- try (hGetChar h)
                     hClose h
-                    return (ord c)
+                    case input of
+                        Left e -> if (isEOFError e) then return (-1) else ioError e
+                        Right inpChr -> return (ord inpChr)
 
             x -> error ("Instruction " ++ (show node) ++
                         " may only have one file handle")
