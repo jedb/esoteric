@@ -212,20 +212,40 @@ pushI g node =
     in if (length stackN /= 1) then error ("Instruction " ++ (show node) ++
                                             " should only have one stack argument")
         else do
-            let newN = head (Graph.newNodes 1 g)
-            labelN <- if (inL == []) then return ""
+            label <- if (inL == []) then return ""
                         else (getStdRandom (randomR (0,length inL - 1))) >>= (\x -> return (inL !! x))
 
-            let edgesToDel = Graph.inn g (head stackN)
-                edgesToAdd = map (\(x,y,z) -> (x,newN,z)) edgesToDel
+            doPushI g (head stackN) label
 
-                nextE = (newN,(head stackN),"next")
 
-                g' = Graph.insNode (newN,labelN) g
-                g'' = foldl' (flip Graph.delLEdge) g' edgesToDel
-                g''' = Graph.insEdges (nextE:edgesToAdd) g''
 
-            return g'''
+implicitPushI :: GraspProgram -> Node -> IO GraspProgram
+implicitPushI g node =
+    let edges = Graph.out g node
+
+        stackN = targetNodes (getByLabel "stack" edges)
+        label = fromJust $ Graph.lab g node
+
+    in if (length stackN /= 1) then error ("Instruction " ++ (show node) ++
+                                            " should only have one stack argument")
+        else doPushI g (head stackN) label
+
+
+
+doPushI :: GraspProgram -> Node -> String -> IO GraspProgram
+doPushI g s l =
+    let newN = head (Graph.newNodes 1 g)
+
+        edgesToDel = Graph.inn g s
+        edgesToAdd = map (\(x,y,z) -> (x,newN,z)) edgesToDel
+
+        nextE = (newN,s,"next")
+
+        g' = Graph.insNode (newN,l) g
+        g'' = foldl' (flip Graph.delLEdge) g' edgesToDel
+        g''' = Graph.insEdges (nextE:edgesToAdd) g''
+
+    in return g'''
 
 
 
@@ -379,7 +399,4 @@ getsI g node = return g
 
 putsI :: GraspProgram -> Node -> IO GraspProgram
 putsI g node = return g
-
-implicitPushI :: GraspProgram -> Node -> IO GraspProgram
-implicitPushI g node = return g
 
