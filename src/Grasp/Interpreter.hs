@@ -203,19 +203,18 @@ delI g node =
 
 
 pushI :: GraspProgram -> Node -> IO GraspProgram
-pushI g node =
+pushI g node = do
     let edges = Graph.out g node
 
         stackN = targetNodes (getByLabel "stack" edges)
         inL = targetLabels g (getByLabel "in" edges)
 
-    in if (length stackN /= 1) then error ("Instruction " ++ (show node) ++
-                                            " should only have one stack argument")
-        else do
-            label <- if (inL == []) then return ""
-                        else (getStdRandom (randomR (0,length inL - 1))) >>= (\x -> return (inL !! x))
+    rnd <- getStdRandom (randomR (0,length inL -1))
+    let label = if (inL == []) then "" else inL !! rnd
 
-            doPushI g (head stackN) label
+    if (length stackN /= 1)
+    then error ("Instruction " ++ (show node) ++ " should only have one stack argument")
+    else doPushI g (head stackN) label
 
 
 
@@ -226,8 +225,8 @@ implicitPushI g node =
         stackN = targetNodes (getByLabel "stack" edges)
         label = fromJust $ Graph.lab g node
 
-    in if (length stackN /= 1) then error ("Instruction " ++ (show node) ++
-                                            " should only have one stack argument")
+    in if (length stackN /= 1)
+        then error ("Instruction " ++ (show node) ++ " should only have one stack argument")
         else doPushI g (head stackN) label
 
 
