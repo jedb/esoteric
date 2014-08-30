@@ -198,12 +198,36 @@ delI g node =
                                         (headN == [] || y `elem` headN) &&
                                         (labelL == [] || z `elem` labelL)) (Graph.labEdges g)
 
-    in return (foldl' (\gr e -> Graph.delLEdge e gr) g edgesToDel)
+    in return (foldl' (flip Graph.delLEdge) g edgesToDel)
 
 
 
 pushI :: GraspProgram -> Node -> IO GraspProgram
-pushI g node = return g
+pushI g node =
+    let edges = Graph.out g node
+
+        stackN = targetNodes (getByLabel "stack" edges)
+        inL = targetLabels g (getByLabel "in" edges)
+
+    in if (length stackN /= 1) then error ("Instruction " ++ (show node) ++
+                                            " should only have one stack argument")
+        else do
+            let newN = head (Graph.newNodes 1 g)
+            labelN <- if (inL == []) then return ""
+                        else (getStdRandom (randomR (0,length inL - 1))) >>= (\x -> return (inL !! x))
+
+            let edgesToDel = Graph.inn g (head stackN)
+                edgesToAdd = map (\(x,y,z) -> (x,newN,z)) edgesToDel
+
+                nextE = (newN,(head stackN),"next")
+
+                g' = Graph.insNode (newN,labelN) g
+                g'' = foldl' (flip Graph.delLEdge) g' edgesToDel
+                g''' = Graph.insEdges (nextE:edgesToAdd) g''
+
+            return g'''
+
+
 
 popI :: GraspProgram -> Node -> IO GraspProgram
 popI g node = return g
