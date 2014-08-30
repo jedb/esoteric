@@ -213,7 +213,7 @@ pushI g node = do
     let label = if (inL == []) then "" else inL !! rnd
 
     if (length stackN /= 1)
-    then error ("Instruction " ++ (show node) ++ " should only have one stack argument")
+    then error ("Instruction " ++ (show node) ++ " should have one stack argument")
     else doPushI g (head stackN) label
 
 
@@ -226,7 +226,7 @@ implicitPushI g node =
         label = fromJust $ Graph.lab g node
 
     in if (length stackN /= 1)
-        then error ("Instruction " ++ (show node) ++ " should only have one stack argument")
+        then error ("Instruction " ++ (show node) ++ " should have one stack argument")
         else doPushI g (head stackN) label
 
 
@@ -249,10 +249,42 @@ doPushI g s l =
 
 
 popI :: GraspProgram -> Node -> IO GraspProgram
-popI g node = return g
+popI g node =
+    let edges = Graph.out g node
+
+        stackN = targetNodes (getByLabel "stack" edges)
+        outL = targetLabels g (getByLabel "out" edges)
+        emptyL = targetLabels g (getByLabel "empty" edges)
+
+    in return g
+
+
 
 pickI :: GraspProgram -> Node -> IO GraspProgram
-pickI g node = return g
+pickI g node =
+    let edges = Graph.out g node
+
+        stackN = targetNodes (getByLabel "stack" edges)
+        depthL = targetLabels g (getByLabel "depth" edges)
+        outL = targetLabels g (getByLabel "out" edges)
+        emptyL = targetLabels g (getByLabel "empty" edges)
+
+    in case (stackN, depthL) of
+        (x,_) | length x /= 1 -> error ("Instruction " ++ (show node) ++
+                                        " should have one stack argument")
+
+        (_,y) | length y /= 1 -> error ("Instruction " ++ (show node) ++
+                                        " should have one depth argument")
+
+        (_,y) | not (isFloat (head y)) -> error ("Instruction " ++ (show node) ++
+                                                " should have numeric depth argument")
+
+        (x,y) -> doPickI g (head x) (head y) outL emptyL
+
+
+
+doPickI :: GraspProgram -> Node -> String -> [String] -> [String] -> IO GraspProgram
+doPickI g s d out empty = return g
 
 
 
