@@ -418,16 +418,16 @@ getcI g node = do
         fhL = targetLabels g (getByLabel "fh" edges)
 
     c <- case fhL of
-            x | length x == 0 -> getChar >>=
+            x | length x == 0 || length x == 1 -> getChar >>=
                 (\x -> if (x == '\EOT') then return (-1) else return (ord x))
 
-            x | length x == 1 -> do
-                    h <- openFile (head fhL) ReadMode
-                    input <- try (hGetChar h)
-                    hClose h
-                    case input of
-                        Left e -> if (isEOFError e) then return (-1) else ioError e
-                        Right inpChr -> return (ord inpChr)
+            --x | length x == 1 -> do
+            --        h <- openFile (head fhL) ReadMode
+            --        input <- try (hGetChar h)
+            --        hClose h
+            --        case input of
+            --            Left e -> if (isEOFError e) then return (-1) else ioError e
+            --            Right inpChr -> return (ord inpChr)
 
             x -> error ("Instruction " ++ (show node) ++
                         " may only have one file handle")
@@ -457,9 +457,9 @@ putcI g node = do
             x -> return . chr . read $ inL!!r
 
     fh <- case fhL of
-            x | length x == 0 -> return stdout
+            x | length x == 0 || length x == 1 -> return stdout
 
-            x | length x == 1 -> openFile (head fhL) AppendMode
+            --x | length x == 1 -> openFile (head fhL) AppendMode
 
             x -> error ("Instruction " ++ (show node) ++
                         " may only have one file handle")
