@@ -79,7 +79,7 @@ execute g (cur:rest) out =
                     "new" -> newI g node
                     "del" -> delI g node
                     "push" -> pushI g node
-                    "pop" -> popI g node
+                    "pop" -> popI g node >>= (\x -> return (garbageCollect x ((cur:rest) ++ out)))
                     "pick" -> pickI g node
                     "add" -> addI g node
                     "mul" -> mulI g node
@@ -252,11 +252,37 @@ popI :: GraspProgram -> Node -> IO GraspProgram
 popI g node =
     let edges = Graph.out g node
 
-        stackN = targetNodes (getByLabel "stack" edges)
-        outL = targetLabels g (getByLabel "out" edges)
+        stackNs = targetNodes (getByLabel "stack" edges)
+        outN = targetNodes (getByLabel "out" edges)
         emptyL = targetLabels g (getByLabel "empty" edges)
 
-    in return g
+    in if (length stackNs /= 1) then error ("Instruction " ++ (show node) ++
+                                            " should have one stack argument")
+
+       else let stackN = head stackNs
+                nextN = targetNodes (getByLabel "next" (Graph.out g stackN))
+
+            in case nextN of
+                x | length x > 1 -> error ("Stack node " ++ (show node) ++
+                                            " should only have one next edge")
+
+                x | length x == 1 ->
+                    let label = fromJust (Graph.lab g stackN)
+                        g' = foldl' (\gr n -> reLabel gr n label) g outN
+
+                        s = head x
+                        edgesToDel = Graph.inn g' s
+                        edgesToAdd = map (\(x,y,z) -> (x,s,z)) edgesToDel
+
+                        g'' = foldl' (flip Graph.delLEdge) g' edgesToDel
+                        g''' = Graph.insEdges edgesToAdd g''
+                    in return g'''
+
+                x ->
+                    if (emptyL == []) then return g
+                    else (getStdRandom (randomR (0,length emptyL - 1))) >>=
+                         (\x -> return (foldl' (\gr n -> reLabel gr n (emptyL !! x)) g outN))
+
 
 
 
