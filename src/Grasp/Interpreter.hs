@@ -125,8 +125,8 @@ isFloat x =
 
 
 
-reLabel :: GraspProgram -> Node -> String -> GraspProgram
-reLabel g n s =
+reLabel :: String -> GraspProgram -> Node -> GraspProgram
+reLabel s g n =
     let (mc,d) = Graph.match n g
         c = fromJust mc
         c' = (\(w,x,y,z) -> (w,x,s,z)) $ c
@@ -168,7 +168,7 @@ setI g node =
     in case inL of
         [] -> return g
         _ -> (getStdRandom (randomR (0,length inL - 1))) >>=
-            (\x -> return (foldl' (\gr n -> reLabel gr n (inL !! x)) g outN) )
+            (\x -> return (foldl' (reLabel (inL !! x)) g outN) )
 
 
 
@@ -275,7 +275,7 @@ popI g node =
 
                 x | length x == 1 ->
                     let label = fromJust (Graph.lab g stackN)
-                        g' = foldl' (\gr n -> reLabel gr n label) g outN
+                        g' = foldl' (reLabel label) g outN
 
                         s = head x
                         edgesToDel = Graph.inn g' s
@@ -288,7 +288,7 @@ popI g node =
                 x ->
                     if (emptyL == []) then return g
                     else (getStdRandom (randomR (0,length emptyL - 1))) >>=
-                         (\x -> return (foldl' (\gr n -> reLabel gr n (emptyL !! x)) g outN))
+                         (\x -> return (foldl' (reLabel (emptyL !! x)) g outN))
 
 
 
@@ -325,12 +325,12 @@ doPickI g stackN depth outN emptyL =
         x | length x == 0 ->
             if (emptyL == []) then return g
             else (getStdRandom (randomR (0,length emptyL - 1))) >>=
-                 (\x -> return (foldl' (\gr n -> reLabel gr n (emptyL !! x)) g outN))
+                 (\x -> return (foldl' (reLabel (emptyL !! x)) g outN))
 
         x ->
             if (depth > 0) then doPickI g (head nextN) (depth - 1) outN emptyL
             else let label = fromJust (Graph.lab g stackN)
-                 in return (foldl' (\gr n -> reLabel gr n label) g outN)
+                 in return (foldl' (reLabel label) g outN)
 
 
 
@@ -359,7 +359,7 @@ addmulI f g node =
         x | not (all isFloat x) -> error ("Instruction " ++ (show node) ++
                                         " has non numeric arguments")
         x -> let s = f . (map read) $ x
-             in return (foldl' (\gr n -> reLabel gr n (show s)) g outN)
+             in return (foldl' (reLabel (show s)) g outN)
 
 
 
@@ -384,7 +384,7 @@ subdivI f g node =
                                 error ("Instruction " ++ (show node) ++
                                         " has non numeric arguments")
         (x,y) -> let s = f (read . head $ x) (map read y)
-                 in return (foldl' (\gr n -> reLabel gr n (show s)) g outN)
+                 in return (foldl' (reLabel (show s)) g outN)
 
 
 
@@ -406,7 +406,7 @@ modI g node =
                                 " has non integer arguments")
 
         (x,y) -> let s = (read . head $ x) `mod` (read . head $ y)
-                 in return (foldl' (\gr n -> reLabel gr n (show s)) g outN)
+                 in return (foldl' (reLabel (show s)) g outN)
 
 
 
@@ -432,7 +432,7 @@ getcI g node = do
             x -> error ("Instruction " ++ (show node) ++
                         " may only have one file handle")
 
-    return (foldl' (\gr n -> reLabel gr n (show c)) g outN)
+    return (foldl' (reLabel (show c)) g outN)
 
 
 
