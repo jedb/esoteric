@@ -292,7 +292,6 @@ popI g node =
 
 
 
-
 pickI :: GraspProgram -> Node -> IO GraspProgram
 pickI g node =
     let edges = Graph.out g node
