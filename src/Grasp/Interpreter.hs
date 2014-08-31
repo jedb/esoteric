@@ -23,6 +23,13 @@ type IP = [LNode String]
 
 
 
+-- this is a disgusting, disgusting way to implement this
+
+-- I blame the inelegance of manipulating graphs, and I strongly suspect
+-- it would be better for all concerned if I created a DSL for that purpose
+-- and refactored all the instructions into that form
+
+
 
 grasp :: GraspProgram -> IO ()
 grasp g =
