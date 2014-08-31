@@ -266,7 +266,7 @@ pickI g node =
 
         stackN = targetNodes (getByLabel "stack" edges)
         depthL = targetLabels g (getByLabel "depth" edges)
-        outL = targetLabels g (getByLabel "out" edges)
+        outN = targetNodes (getByLabel "out" edges)
         emptyL = targetLabels g (getByLabel "empty" edges)
 
     in case (stackN, depthL) of
@@ -276,15 +276,29 @@ pickI g node =
         (_,y) | length y /= 1 -> error ("Instruction " ++ (show node) ++
                                         " should have one depth argument")
 
-        (_,y) | not (isFloat (head y)) -> error ("Instruction " ++ (show node) ++
-                                                " should have numeric depth argument")
+        (_,y) | not (isInteger (head y)) -> error ("Instruction " ++ (show node) ++
+                                                " should have integer depth argument")
 
-        (x,y) -> doPickI g (head x) (head y) outL emptyL
+        (x,y) -> doPickI g (head x) (read (head y)) outN emptyL
 
 
 
-doPickI :: GraspProgram -> Node -> String -> [String] -> [String] -> IO GraspProgram
-doPickI g s d out empty = return g
+doPickI :: GraspProgram -> Node -> Int -> [Node] -> [String] -> IO GraspProgram
+doPickI g stackN depth outN emptyL =
+    let nextN = targetNodes (getByLabel "next" (Graph.out g stackN))
+
+    in case nextN of
+        x | length x > 1 -> error ("Stack has too many next edges at node " ++ (show stackN))
+
+        x | length x == 0 ->
+            if (emptyL == []) then return g
+            else (getStdRandom (randomR (0,length emptyL - 1))) >>=
+                 (\x -> return (foldl' (\gr n -> reLabel gr n (emptyL !! x)) g outN))
+
+        x ->
+            if (depth > 0) then doPickI g (head nextN) (depth - 1) outN emptyL
+            else let label = fromJust (Graph.lab g stackN)
+                 in return (foldl' (\gr n -> reLabel gr n label) g outN)
 
 
 
