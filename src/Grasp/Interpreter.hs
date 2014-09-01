@@ -11,6 +11,8 @@ import System.IO.Error
 import Text.Read( readMaybe )
 import Data.Graph.Inductive.Graph( Node, LNode, LEdge, (&) )
 import qualified Data.Graph.Inductive.Graph as Graph
+import Data.Map( (!) )
+import qualified Data.Map as Map
 import Data.List
 import Data.Maybe
 import Data.Char
@@ -335,7 +337,39 @@ doPickI g stackN depth outN emptyL =
 
 
 callI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-callI g ip = return (g,ip)
+callI g ip =
+    let node = fst . head $ ip
+        edges = Graph.out g node
+
+        funcL = targetLabels g (getByLabel "func" edges)
+        arguments = filter (\(x,y,z) -> z /= "func" && z /= "name" && z /= "cond" && z /= "next") edges
+
+        possibleFuncs = concatMap (nodesWithName g) funcL
+
+    in if (possibleFuncs == []) then error ("Call from " ++ (show node) ++ " has no candidates")
+       else do
+            r <- getStdRandom (randomR (0,length possibleFuncs - 1))
+            
+            let oldNodes = reachable g [[possibleFuncs !! r]]
+                oldEdges = filter (\(x,y,z) -> x `elem` oldNodes && y `elem` oldNodes) (Graph.labEdges g)
+
+                nodeMap = Map.fromList (zip oldNodes (Graph.newNodes (length oldNodes) g))
+
+                labels = map (fromJust . (Graph.lab g)) oldNodes
+                newNodes = map (nodeMap !) oldNodes
+
+                newLNodes = zip newNodes labels
+                newEdges = map (\(x,y,z) -> (nodeMap ! x, nodeMap ! y, z)) oldEdges
+
+                mainNode = (\(x,y) -> (nodeMap ! x, y)) (possibleFuncs !! r)
+                argEdges = map (\(x,y,z) -> (nodeMap ! (fst (possibleFuncs !! r)), y, z)) arguments
+
+                g' = (Graph.insEdges (newEdges ++ argEdges)) . (Graph.insNodes newLNodes) $ g
+                ip' = mainNode : ip
+
+            return (g', ip')
+
+
 
 retI :: GraspProgram -> IP -> IO (GraspProgram, IP)
 retI g ip = return (g,ip)
