@@ -107,7 +107,7 @@ execute g (cur:rest) out =
         (_,x) -> do
             (g',cur') <- case x of
                     "call" -> callI g cur
-                    "ret" -> retI g cur
+                    "ret" -> retI g cur >>= (\(x,y) -> return (garbageCollect x ((y:rest) ++ out), y))
                     _ -> error ("Execute function reached impossible branch")
             execute g' rest (cur':out)
 
@@ -372,7 +372,26 @@ callI g ip =
 
 
 retI :: GraspProgram -> IP -> IO (GraspProgram, IP)
-retI g ip = return (g,ip)
+retI g (n:[]) = return (g,[])
+retI g ip =
+    let oldEdges = Graph.out g (fst . head $ ip)
+        returnValues = filter (\(x,y,z) -> z /= "name" && z /= "cond" && z /= "next") oldEdges
+
+        node = fst . head $ (tail ip)
+        edges = Graph.out g node
+
+        nextLN = targetLNodes g (getByLabel "next" edges)
+
+    in if (nextLN == []) then return (g,[])
+       else do
+            ip' <- updateIP (tail ip) nextLN
+
+            let node' = fst . head $ ip'
+                returnEdges = map (\(x,y,z) -> (node',y,z)) returnValues
+
+                g' = Graph.insEdges returnEdges g
+
+            return (g',ip')
 
 
 
