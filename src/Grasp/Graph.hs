@@ -106,9 +106,9 @@ match n gr =
     	then (Nothing, gr)
     	else (Just (to, n, label, from), gr)
     where
-    	to = map edgeToAdjTo (filter (edgeTo n) (labEdges gr))
+    	to = edgesToAdjTo (filter (edgeTo n) (labEdges gr))
     	label = snd . head $ (filter (\(x,y) -> x == n) (labNodes gr))
-    	from = map edgeToAdjFrom (filter (edgeFrom n) (labEdges gr))
+    	from = edgesToAdjFrom (filter (edgeFrom n) (labEdges gr))
 
 
 
@@ -133,21 +133,21 @@ nodes gr = (map fst) . labNodes $ gr
 
 
 
-edgeToAdjFrom :: LEdge a -> Adj a
-edgeToAdjFrom (x,y,z) = (z,y)
+edgesToAdjFrom :: [LEdge a] -> Adj a
+edgesToAdjFrom = map (\(x,y,z) -> (z,x))
 
 
 
-edgeToAdjTo :: LEdge a -> Adj a
-edgeToAdjTo (x,y,z) = (z,x)
+edgesToAdjTo :: [LEdge a] -> Adj a
+edgesToAdjTo = map (\(x,y,z) -> (z,y))
 
 
 
 edgeFrom :: Node -> LEdge a -> Bool
-edgeFrom n (x,y,z) = (y == n)
+edgeFrom n (x,y,z) = (x == n)
 
 
 
 edgeTo :: Node -> LEdge a -> Bool
-edgeTo n (x,y,z) = (x == n)
+edgeTo n (x,y,z) = (y == n)
 
