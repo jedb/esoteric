@@ -1,67 +1,48 @@
 module Grasp.Types (
-	GraspProgram(..),
-
-    namedNodes,
-	nodesWithName,
-	normalise,
-	iso
+	Instruction,
+	EdgeLabel,
+	GNode,
+	GEdge
     ) where
 
 
-import Data.Graph.Inductive.Graph( Node, LNode, LEdge, (&) )
-import qualified Data.Graph.Inductive.Graph as Graph
-import Data.Graph.Inductive.Tree
-import Data.List
-import Data.Maybe
-import qualified Data.Map as Map
+
+
+import Grasp.Graph( Node, LNode, LEdge )
 
 
 
 
-type GraspProgram = Gr String String
+newtype Instruction = Instruction String
+    deriving (Eq, Show)
+
+newtype EdgeLabel = EdgeLabel String
+    deriving (Eq, Show)
+
+newtype GNode = GNode (LNode Instruction)
+    deriving (Eq, Show)
+
+newtype GEdge = GEdge (LEdge EdgeLabel)
+    deriving (Eq, Show)
 
 
 
-instance (Ord a, Ord b) => Eq (Gr a b) where
-	a == b  =   ((sort . Graph.labNodes $ a) == (sort . Graph.labNodes $ b)) &&
-	            ((sort . Graph.labEdges $ a) == (sort . Graph.labEdges $ b))
+
+gnode :: GNode -> Node
+gnode (GNode a) = fst a
+
+gninst :: GNode -> Instruction
+gninst (GNode a) = snd a
 
 
 
 
-namedNodes :: GraspProgram -> [LNode String]
-namedNodes g =
-	let nodes = Graph.labNodes g
-	    edges = Graph.labEdges g
+gefrom :: GEdge -> Node
+gefrom (GEdge (a,_,_)) = a
 
-	    nameEdges = filter (\(_,_,z) -> z == "name") edges
-	    nameNodes = map (\(x,_,_) -> x) nameEdges
+geto :: GEdge -> Node
+geto (GEdge (_,b,_)) = b
 
-	in filter (\(x,_) -> x `elem` nameNodes) nodes
-
-
-
-nodesWithName :: GraspProgram -> String -> [LNode String]
-nodesWithName g s =
-	let nodes = Graph.labNodes g
-	    edges = Graph.labEdges g
-
-	    nodeLabelMap = Map.fromList nodes
-
-	    nameEdges = filter (\(_,_,z) -> z == "name") edges
-	    specific = filter (\(_,y,_) -> fromJust (Map.lookup y nodeLabelMap) == s) nameEdges
-	    nameNodes = map (\(x,_,_) -> x) specific
-
-	in filter (\(x,_) -> x `elem` nameNodes) nodes
-
-
-
--- to-do
-normalise :: GraspProgram -> GraspProgram
-normalise g = Graph.mkGraph [] []
-
-
-
-iso :: GraspProgram -> GraspProgram -> Bool
-iso a b = (normalise a) == (normalise b)
+gelabel :: GEdge -> EdgeLabel
+gelabel (GEdge (_,_,c)) = c
 

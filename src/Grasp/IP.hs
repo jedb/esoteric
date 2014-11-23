@@ -10,27 +10,30 @@ module Grasp.IP (
 
 
 
-import Grasp.Node( GNode )
-import qualified Grasp.Node as GN
+
+import Grasp.Types( GNode )
 
 
 
-type IP = [GNode]
+
+newtype IP = IP [GNode]
+    deriving (Eq, Show)
+
 
 
 
 singleton :: GNode -> IP
-singleton = (:[])
+singleton n = IP [n]
 
 peek :: IP -> GNode
-peek = head
+peek (IP p) = head p
 
 push :: GNode -> IP -> IP
-push = (:)
+push n (IP p) = IP (n:p)
 
 pop :: IP -> IP
-pop = tail
+pop (IP p) = IP (tail p)
 
 isEmpty :: IP -> Bool
-isEmpty = (==[])
+isEmpty (IP p) = (length p == 0)
 
