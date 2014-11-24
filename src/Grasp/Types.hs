@@ -1,8 +1,8 @@
 module Grasp.Types (
-	Instruction,
-	EdgeLabel,
-	GNode,
-	GEdge
+	Instruction(..),
+	EdgeLabel(..),
+	GNode(..),
+	GEdge(..)
     ) where
 
 
