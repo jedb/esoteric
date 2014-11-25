@@ -2,7 +2,13 @@ module Grasp.Types (
 	Instruction(..),
 	EdgeLabel(..),
 	GNode(..),
-	GEdge(..)
+	GEdge(..),
+
+	gnode,
+	gninst,
+	gefrom,
+	geto,
+	gelabel
     ) where
 
 
