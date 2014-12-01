@@ -6,7 +6,8 @@ module Grasp.IP (
     isEmpty,
     peek,
     push,
-    pop
+    pop,
+    shift
 	) where
 
 
@@ -39,5 +40,8 @@ push :: GNode -> IP -> IP
 push n (IP p) = IP (n:p)
 
 pop :: IP -> IP
-pop (IP p) = if (length p == 0) then IP p else IP (tail p)
+pop (IP p) = if (length p == 0) then empty else IP (tail p)
+
+shift :: GNode -> IP -> IP
+shift n (IP p) = if (length p == 0) then empty else IP (n:(tail p))
 
