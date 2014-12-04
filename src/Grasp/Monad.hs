@@ -5,13 +5,23 @@ module Grasp.Monad (
     finalise,
 
     getReadHandle,
-    getWriteHandle
+    getWriteHandle,
+
+    updateIP,
+    pushIP,
+    popIP,
+    peekIP,
+    nextIP,
+
+    nodesOut
     ) where
 
 
 
 import System.IO( Handle, FilePath, IOMode )
 import qualified System.IO as IO
+
+import qualified System.Random as Random
 
 import Control.Monad.Trans.State.Lazy( StateT )
 import qualified Control.Monad.Trans.State.Lazy as State
@@ -181,4 +191,73 @@ nameNodeList ns es =
 nodesWithName :: [GNode] -> [GEdge] -> String -> [GNode]
 nodesWithName ns es name =
     (map fst) . (filter (\x -> (Types.gninst . snd $ x) == (Instruction name))) $ (nameNodeList ns es)
+
+
+
+updateIP :: GraspM ()
+updateIP = do
+    program <- State.get
+    curNode <- peekIP
+    Monad.when (Maybe.isJust curNode) (do
+        nexts <- nodesOut (EdgeLabel "next") (Maybe.fromJust curNode)
+        r <- liftIO (Random.getStdRandom (Random.randomR (0, length nexts - 1)))
+
+        let ips = instPtrs program
+            updated = if (length nexts == 0) then IP.empty else IP.shift (nexts !! r) (head ips)
+            ips' = updated:(tail ips)
+
+        State.put (GraspProgram (programGraph program) ips' (fileHandles program)) )
+
+
+
+pushIP :: GNode -> GraspM ()
+pushIP n = do
+    program <- State.get
+    let ips = instPtrs program
+        ips' = if (length ips == 0) then [] else (IP.push n (head ips)):(tail ips)
+    State.put (GraspProgram (programGraph program) ips' (fileHandles program))
+
+
+
+popIP :: GraspM ()
+popIP = do
+    program <- State.get
+    let ips = instPtrs program
+        ips' = if (length ips == 0) then [] else (IP.pop (head ips)):(tail ips)
+    State.put (GraspProgram (programGraph program) ips' (fileHandles program))
+
+
+
+peekIP :: GraspM (Maybe GNode)
+peekIP = do
+    program <- State.get
+    let ips = instPtrs program
+    if (length ips == 0) then return Nothing else return (IP.peek (head ips))
+
+
+
+nextIP :: GraspM ()
+nextIP = do
+    program <- State.get
+    let ips = instPtrs program
+        ips' = if (length ips == 0)
+                then []
+                else if (IP.isEmpty (head ips))
+                        then tail ips
+                        else (tail ips) ++ [head ips]
+    State.put (GraspProgram (programGraph program) ips' (fileHandles program))
+
+
+
+nodesOut :: EdgeLabel -> GNode -> GraspM [GNode]
+nodesOut s n = do
+    program <- State.get
+    curNode <- peekIP
+
+    let gr = programGraph program
+        nout = Graph.lsuc gr (Types.gnode (Maybe.fromJust curNode))
+        filtered = filter ((== s) . snd) nout
+        result = map (\(x,y) -> GNode (x, Maybe.fromJust (Graph.lab gr x))) filtered
+
+    if (Maybe.isNothing curNode) then return [] else return result
 
