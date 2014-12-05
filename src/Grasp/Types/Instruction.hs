@@ -4,7 +4,8 @@ module Grasp.Types.Instruction (
 	mk,
 
 	toString,
-	toFloat
+	toFloat,
+	toInt
     ) where
 
 
@@ -29,4 +30,7 @@ toString (Instruction i) = i
 
 toFloat :: Instruction -> Maybe Float
 toFloat (Instruction i) = readMaybe i
+
+toInt :: Instruction -> Maybe Int
+toInt (Instruction i) = readMaybe i
 
