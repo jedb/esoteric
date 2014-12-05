@@ -3,15 +3,23 @@ module Grasp.Parser (
     ) where
 
 
+
+
 import Control.Applicative( some )
 import Data.Char( toLower, toUpper )
 import Text.ParserCombinators.Parsec
 
-import Grasp.GNode( GNode )
-import qualified Grasp.GNode as GN
+import Grasp.Types.GNode( GNode )
+import qualified Grasp.Types.GNode as GN
 
-import Grasp.GEdge( GEdge )
-import qualified Grasp.GEdge as GE
+import Grasp.Types.GEdge( GEdge )
+import qualified Grasp.Types.GEdge as GE
+
+import Grasp.Types.Instruction( Instruction )
+import qualified Grasp.Types.Instruction as IN
+
+import Grasp.Types.EdgeLabel( EdgeLabel )
+import qualified Grasp.Types.EdgeLabel as EL
 
 
 
@@ -130,7 +138,7 @@ node = do
     a <- attrList
     optional (char ';')
     whiteSpace
-    return (GN.mkGNode (n, GN.mkInst a))
+    return (GN.mk (n, IN.mk a))
 
 
 edge = do
@@ -140,7 +148,7 @@ edge = do
     c <- attrList
     optional (char ';')
     whiteSpace
-    return (GE.mkGEdge (a,b, GE.mkLabel c))
+    return (GE.mk (a,b, EL.mk c))
 
 
 edgeOp = string "->" >> whiteSpace >> return "->"

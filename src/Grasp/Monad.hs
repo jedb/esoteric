@@ -18,6 +18,7 @@ module Grasp.Monad (
 
 
 
+
 import System.IO( Handle, FilePath, IOMode )
 import qualified System.IO as IO
 
@@ -40,19 +41,26 @@ import qualified Data.Map as Map
 import Grasp.Graph( Node, LNode, LEdge, Gr )
 import qualified Grasp.Graph as Graph
 
-import Grasp.IP( IP )
-import qualified Grasp.IP as IP
+import Grasp.Types.IP( IP )
+import qualified Grasp.Types.IP as IP
 
-import Grasp.GNode( GNode, Instruction )
-import qualified Grasp.GNode as GN
+import Grasp.Types.GNode( GNode )
+import qualified Grasp.Types.GNode as GN
 
-import Grasp.GEdge( GEdge, EdgeLabel )
-import qualified Grasp.GEdge as GE
+import Grasp.Types.GEdge( GEdge )
+import qualified Grasp.Types.GEdge as GE
+
+import Grasp.Types.Instruction( Instruction )
+import qualified Grasp.Types.Instruction as IN
+
+import Grasp.Types.EdgeLabel( EdgeLabel )
+import qualified Grasp.Types.EdgeLabel as EL
 
 
 
 
 type GraspM a = StateT GraspProgram IO a
+
 
 
 
@@ -86,7 +94,7 @@ finalise s = do
     (mapM_ IO.hClose) . Map.elems . fileHandles $ p
     let gr = programGraph p
         (nodes, edges) = (Graph.labNodes gr, Graph.labEdges gr)
-    return (map GN.mkGNode nodes, map GE.mkGEdge edges)
+    return (map GN.mk nodes, map GE.mk edges)
 
 
 
@@ -113,14 +121,14 @@ multiNames ns es =
 numericName :: [GNode] -> [GEdge] -> Bool
 numericName ns es =
     let names = map snd (nameNodeList ns es)
-    in any (\x -> Maybe.isJust (GN.instToFloat (GN.toInst x))) names
+    in any (\x -> Maybe.isJust (IN.toFloat (GN.toInst x))) names
 
 
 
 noMain :: [GNode] -> [GEdge] -> Bool
 noMain ns es =
     let names = map snd (nameNodeList ns es)
-        mains = filter ((== (GN.mkInst "grasp:main")) . GN.toInst) names
+        mains = filter ((== (IN.mk "grasp:main")) . GN.toInst) names
     in length mains /= 0
 
 
@@ -172,7 +180,7 @@ getReadHandle path = do
 -- fix this later so it doesn't required unconnected edge checking first
 nameNodeList :: [GNode] -> [GEdge] -> [(GNode,GNode)]
 nameNodeList ns es =
-    let nameEdges = filter ((== (GE.mkLabel "name")) . GE.toLabel) es
+    let nameEdges = filter ((== (EL.mk "name")) . GE.toLabel) es
         findNode n = Maybe.fromJust (List.find ((== n) . GN.toNode) ns)
     in map (\x -> (findNode (GE.toSrc x), findNode (GE.toDest x))) nameEdges
 
@@ -180,7 +188,7 @@ nameNodeList ns es =
 
 nodesWithName :: [GNode] -> [GEdge] -> String -> [GNode]
 nodesWithName ns es name =
-    (map fst) . (filter (\x -> (GN.toInst . snd $ x) == (GN.mkInst name))) $ (nameNodeList ns es)
+    (map fst) . (filter (\x -> (GN.toInst . snd $ x) == (IN.mk name))) $ (nameNodeList ns es)
 
 
 
@@ -189,7 +197,7 @@ updateIP = do
     program <- State.get
     curNode <- peekIP
     Monad.when (Maybe.isJust curNode) (do
-        nexts <- nodesOut (GE.mkLabel "next") (Maybe.fromJust curNode)
+        nexts <- nodesOut (EL.mk "next") (Maybe.fromJust curNode)
         r <- liftIO (Random.getStdRandom (Random.randomR (0, length nexts - 1)))
 
         let ips = instPtrs program
@@ -247,7 +255,7 @@ nodesOut s n = do
     let gr = programGraph program
         nout = Graph.lsuc gr (GN.toNode (Maybe.fromJust curNode))
         filtered = filter ((== s) . snd) nout
-        result = map (\(x,y) -> GN.mkGNode (x, Maybe.fromJust (Graph.lab gr x))) filtered
+        result = map (\(x,y) -> GN.mk (x, Maybe.fromJust (Graph.lab gr x))) filtered
 
     if (Maybe.isNothing curNode) then return [] else return result
 

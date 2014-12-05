@@ -1,4 +1,4 @@
-module Grasp.IP (
+module Grasp.Types.IP (
 	IP,
 
     singleton,
@@ -13,7 +13,7 @@ module Grasp.IP (
 
 
 
-import Grasp.GNode( GNode )
+import Grasp.Types.GNode( GNode )
 
 
 

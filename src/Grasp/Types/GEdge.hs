@@ -1,9 +1,7 @@
-module Grasp.GEdge (
+module Grasp.Types.GEdge (
 	GEdge,
-	EdgeLabel,
 
-	mkGEdge,
-	mkLabel,
+	mk,
 
 	toSrc,
 	toDest,
@@ -15,12 +13,10 @@ module Grasp.GEdge (
 
 
 import Grasp.Graph( Node, LEdge )
+import Grasp.Types.EdgeLabel( EdgeLabel )
 
 
 
-
-newtype EdgeLabel = EdgeLabel String
-    deriving (Show, Eq)
 
 newtype GEdge = GEdge (LEdge EdgeLabel)
     deriving (Show, Eq)
@@ -28,30 +24,17 @@ newtype GEdge = GEdge (LEdge EdgeLabel)
 
 
 
-mkGEdge :: LEdge EdgeLabel -> GEdge
-mkGEdge = GEdge
+mk :: LEdge EdgeLabel -> GEdge
+mk = GEdge
 
-
-
-mkLabel :: String -> EdgeLabel
-mkLabel = EdgeLabel
-
-
-
-toSrc :: GEdge -> String
+toSrc :: GEdge -> Node
 toSrc (GEdge (x,_,_)) = x
 
-
-
-toDest :: GEdge -> String
+toDest :: GEdge -> Node
 toDest (GEdge (_,y,_)) = y
-
-
 
 toLabel :: GEdge -> EdgeLabel
 toLabel (GEdge (_,_,z)) = z
-
-
 
 toLEdge :: GEdge -> LEdge EdgeLabel
 toLEdge (GEdge e) = e
