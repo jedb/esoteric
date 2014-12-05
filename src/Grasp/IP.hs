@@ -13,7 +13,7 @@ module Grasp.IP (
 
 
 
-import Grasp.Types( GNode )
+import Grasp.GNode( GNode )
 
 
 

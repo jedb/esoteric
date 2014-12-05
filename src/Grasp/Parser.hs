@@ -6,7 +6,12 @@ module Grasp.Parser (
 import Control.Applicative( some )
 import Data.Char( toLower, toUpper )
 import Text.ParserCombinators.Parsec
-import Grasp.Types( Instruction(..), EdgeLabel(..), GNode(..), GEdge(..) )
+
+import Grasp.GNode( GNode )
+import qualified Grasp.GNode as GN
+
+import Grasp.GEdge( GEdge )
+import qualified Grasp.GEdge as GE
 
 
 
@@ -125,7 +130,7 @@ node = do
     a <- attrList
     optional (char ';')
     whiteSpace
-    return (GNode (n, Instruction a))
+    return (GN.mkGNode (n, GN.mkInst a))
 
 
 edge = do
@@ -135,7 +140,7 @@ edge = do
     c <- attrList
     optional (char ';')
     whiteSpace
-    return (GEdge (a,b, EdgeLabel c))
+    return (GE.mkGEdge (a,b, GE.mkLabel c))
 
 
 edgeOp = string "->" >> whiteSpace >> return "->"

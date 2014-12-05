@@ -30,8 +30,6 @@ import qualified Control.Monad as Monad
 
 import Control.Monad.IO.Class( liftIO )
 
-import Text.Read( readMaybe )
-
 import qualified Data.Maybe as Maybe
 
 import qualified Data.List as List
@@ -45,8 +43,11 @@ import qualified Grasp.Graph as Graph
 import Grasp.IP( IP )
 import qualified Grasp.IP as IP
 
-import Grasp.Types( Instruction(..), EdgeLabel(..), GNode(..), GEdge(..) )
-import qualified Grasp.Types as Types
+import Grasp.GNode( GNode, Instruction )
+import qualified Grasp.GNode as GN
+
+import Grasp.GEdge( GEdge, EdgeLabel )
+import qualified Grasp.GEdge as GE
 
 
 
@@ -71,7 +72,7 @@ construct (n,e) = do
     Monad.when (numericName n e) (error "node with a numeric name")
     Monad.when (noMain n e) (error "could not find grasp:main")
 
-    let graph = Graph.mkGraph (map toLNode n) (map toLEdge e)
+    let graph = Graph.mkGraph (map GN.toLNode n) (map GE.toLEdge e)
         ips = map IP.singleton (nodesWithName n e "grasp:main")
         handles = Map.empty
 
@@ -85,29 +86,19 @@ finalise s = do
     (mapM_ IO.hClose) . Map.elems . fileHandles $ p
     let gr = programGraph p
         (nodes, edges) = (Graph.labNodes gr, Graph.labEdges gr)
-    return (map GNode nodes, map GEdge edges)
-
-
-
-toLNode :: GNode -> LNode Instruction
-toLNode n = (Types.gnode n, Types.gninst n)
-
-
-
-toLEdge :: GEdge -> LEdge EdgeLabel
-toLEdge e = (Types.gefrom e, Types.geto e, Types.gelabel e)
+    return (map GN.mkGNode nodes, map GE.mkGEdge edges)
 
 
 
 multiNodes :: [GNode] -> Bool
-multiNodes ns = (ns == (List.nubBy (\x y -> Types.gnode x == Types.gnode y) ns))
+multiNodes ns = (ns == (List.nubBy (\x y -> GN.toNode x == GN.toNode y) ns))
 
 
 
 unconnected :: [GNode] -> [GEdge] -> Bool
 unconnected ns es =
-    let nodeList = map Types.gnode ns
-        unconnectedEdges = filter (\x -> Types.gefrom x `notElem` nodeList || Types.geto x `notElem` nodeList) es
+    let nodeList = map GN.toNode ns
+        unconnectedEdges = filter (\x -> GE.toSrc x `notElem` nodeList || GE.toDest x `notElem` nodeList) es
     in unconnectedEdges /= []
 
 
@@ -122,15 +113,14 @@ multiNames ns es =
 numericName :: [GNode] -> [GEdge] -> Bool
 numericName ns es =
     let names = map snd (nameNodeList ns es)
-        test (Instruction x) = readMaybe x :: Maybe Float
-    in any (\x -> Maybe.isJust (test (Types.gninst x))) names
+    in any (\x -> Maybe.isJust (GN.instToFloat (GN.toInst x))) names
 
 
 
 noMain :: [GNode] -> [GEdge] -> Bool
 noMain ns es =
     let names = map snd (nameNodeList ns es)
-        mains = filter ((== (Instruction "grasp:main")) . Types.gninst) names
+        mains = filter ((== (GN.mkInst "grasp:main")) . GN.toInst) names
     in length mains /= 0
 
 
@@ -182,15 +172,15 @@ getReadHandle path = do
 -- fix this later so it doesn't required unconnected edge checking first
 nameNodeList :: [GNode] -> [GEdge] -> [(GNode,GNode)]
 nameNodeList ns es =
-    let nameEdges = filter ((== (EdgeLabel "name")) . Types.gelabel) es
-        findNode n = Maybe.fromJust (List.find ((== n) . Types.gnode) ns)
-    in map (\x -> (findNode (Types.gefrom x), findNode (Types.geto x))) nameEdges
+    let nameEdges = filter ((== (GE.mkLabel "name")) . GE.toLabel) es
+        findNode n = Maybe.fromJust (List.find ((== n) . GN.toNode) ns)
+    in map (\x -> (findNode (GE.toSrc x), findNode (GE.toDest x))) nameEdges
 
 
 
 nodesWithName :: [GNode] -> [GEdge] -> String -> [GNode]
 nodesWithName ns es name =
-    (map fst) . (filter (\x -> (Types.gninst . snd $ x) == (Instruction name))) $ (nameNodeList ns es)
+    (map fst) . (filter (\x -> (GN.toInst . snd $ x) == (GN.mkInst name))) $ (nameNodeList ns es)
 
 
 
@@ -199,7 +189,7 @@ updateIP = do
     program <- State.get
     curNode <- peekIP
     Monad.when (Maybe.isJust curNode) (do
-        nexts <- nodesOut (EdgeLabel "next") (Maybe.fromJust curNode)
+        nexts <- nodesOut (GE.mkLabel "next") (Maybe.fromJust curNode)
         r <- liftIO (Random.getStdRandom (Random.randomR (0, length nexts - 1)))
 
         let ips = instPtrs program
@@ -255,9 +245,9 @@ nodesOut s n = do
     curNode <- peekIP
 
     let gr = programGraph program
-        nout = Graph.lsuc gr (Types.gnode (Maybe.fromJust curNode))
+        nout = Graph.lsuc gr (GN.toNode (Maybe.fromJust curNode))
         filtered = filter ((== s) . snd) nout
-        result = map (\(x,y) -> GNode (x, Maybe.fromJust (Graph.lab gr x))) filtered
+        result = map (\(x,y) -> GN.mkGNode (x, Maybe.fromJust (Graph.lab gr x))) filtered
 
     if (Maybe.isNothing curNode) then return [] else return result
 
