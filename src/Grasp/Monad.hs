@@ -33,6 +33,7 @@ import Control.Monad.IO.Class( liftIO )
 
 import qualified Data.Maybe as Maybe
 
+import Data.List( (\\) )
 import qualified Data.List as List
 
 import Data.Map( Map )
@@ -192,6 +193,11 @@ nodesWithName ns es name =
 
 
 
+namedNodes :: [GNode] -> [GEdge] -> [GNode]
+namedNodes ns es = map fst (nameNodeList ns es)
+
+
+
 updateIP :: GraspM ()
 updateIP = do
     program <- State.get
@@ -238,12 +244,40 @@ nextIP :: GraspM ()
 nextIP = do
     program <- State.get
     let ips = instPtrs program
+        gr = programGraph program
         ips' = if (length ips == 0)
                 then []
                 else if (IP.isEmpty (head ips))
                         then tail ips
                         else (tail ips) ++ [head ips]
-    State.put (GraspProgram (programGraph program) ips' (fileHandles program))
+        gr' = garbageCollect gr ips'
+    State.put (GraspProgram gr' ips' (fileHandles program))
+
+
+
+garbageCollect :: Gr Instruction EdgeLabel -> [IP] -> Gr Instruction EdgeLabel
+garbageCollect gr ips =
+    let unreachable = (Graph.nodes gr) \\ (reachable gr ips)
+    in Graph.delNodes unreachable gr
+
+
+
+reachable :: Gr Instruction EdgeLabel -> [IP] -> [Node]
+reachable gr ips =
+    let named = namedNodes (map GN.mk (Graph.labNodes gr)) (map GE.mk (Graph.labEdges gr))
+        ipNodes = concatMap IP.toList ips
+        start = (map GN.toNode) . List.nub $ named ++ ipNodes
+    in reach gr start []
+
+
+
+reach :: Gr Instruction EdgeLabel -> [Node] -> [Node] -> [Node]
+reach _ [] f = f
+reach gr (x:xs) f =
+    let f' = List.nub (x:f)
+        x' = List.nub (xs ++ (Graph.suc gr x))
+        gr' = Graph.delNode x gr
+    in reach gr' x' f'
 
 
 

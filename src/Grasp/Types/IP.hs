@@ -7,7 +7,9 @@ module Grasp.Types.IP (
     peek,
     push,
     pop,
-    shift
+    shift,
+
+    toList
 	) where
 
 
@@ -44,4 +46,7 @@ pop (IP p) = if (length p == 0) then empty else IP (tail p)
 
 shift :: GNode -> IP -> IP
 shift n (IP p) = if (length p == 0) then empty else IP (n:(tail p))
+
+toList :: IP -> [GNode]
+toList (IP p) = p
 
