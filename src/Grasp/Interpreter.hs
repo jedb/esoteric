@@ -5,6 +5,9 @@ module Grasp.Interpreter (
 
 
 
+import System.IO( Handle, FilePath, IOMode )
+import qualified System.IO as IO
+
 import qualified System.Random as Random
 
 import qualified Control.Monad as Monad
@@ -15,6 +18,8 @@ import qualified Data.Maybe as Maybe
 
 import Data.List( (!!) )
 import qualified Data.List as List
+
+import qualified Data.Char as Char
 
 import Grasp.Monad( GraspM )
 import qualified Grasp.Monad as GMonad
@@ -245,12 +250,46 @@ modI = do
 
 
 getcI :: GraspM ()
-getcI = GMonad.updateIP
+getcI = do
+    curNode <- GMonad.peekIP >>= return . Maybe.fromJust
+
+    outNodes <- GMonad.nodesOut (EL.mk "out") curNode
+    fhNodes <- GMonad.nodesOut (EL.mk "fh") curNode
+
+    Monad.when (length fhNodes > 1) (error "Instruction getc should have at most one fh argument")
+
+    let fh = IN.toString . GN.toInst . head $ fhNodes
+    handle <- if (length fhNodes == 0) then return IO.stdin else GMonad.getReadHandle fh
+
+    c <- liftIO (IO.hGetChar handle)
+    let result = if (c == '\EOT') then -1 else Char.ord c
+    mapM_ (GMonad.reLabel (IN.mk (show result))) outNodes
+
+    GMonad.updateIP
 
 
 
 putcI :: GraspM ()
-putcI = GMonad.updateIP
+putcI = do
+    curNode <- GMonad.peekIP >>= return . Maybe.fromJust
+
+    inNodes <- GMonad.nodesOut (EL.mk "in") curNode
+    fhNodes <- GMonad.nodesOut (EL.mk "fh") curNode
+
+    Monad.when (length inNodes < 1) (error "Instruction putc should have at least one in argument")
+    Monad.when (length fhNodes > 1) (error "Instruction putc should have at most one fh argument")
+
+    r <- liftIO (Random.getStdRandom (Random.randomR (0, length inNodes -1)))
+    let rIn = IN.toInt . GN.toInst $ inNodes !! r
+
+    Monad.unless (Maybe.isJust rIn) (error "Instruction putc should have integer in argument")
+    Monad.unless ((>=0) (Maybe.fromJust rIn)) (error "Instruction putc should have positive in argument")
+
+    let fh = IN.toString . GN.toInst . head $ fhNodes
+    handle <- if (length fhNodes == 0) then return IO.stdout else GMonad.getWriteHandle fh
+    liftIO (IO.hPutChar handle (Char.chr (Maybe.fromJust rIn)))
+
+    GMonad.updateIP
 
 
 
