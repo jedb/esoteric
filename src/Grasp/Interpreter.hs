@@ -142,27 +142,105 @@ retI = GMonad.updateIP
 
 
 addI :: GraspM ()
-addI = GMonad.updateIP
+addI = do
+    curNode <- GMonad.peekIP >>= return . Maybe.fromJust
+
+    argNodes <- GMonad.nodesOut (EL.mk "arg") curNode
+    outNodes <- GMonad.nodesOut (EL.mk "out") curNode
+
+    Monad.unless (all (Maybe.isJust . IN.toFloat . GN.toInst) argNodes)
+        (error "Instruction add should have numeric arg arguments")
+
+    let input = map (Maybe.fromJust . IN.toFloat . GN.toInst) argNodes
+        result = sum input
+    mapM_ (GMonad.reLabel (IN.mk (show result))) outNodes
+
+    GMonad.updateIP
 
 
 
 mulI :: GraspM ()
-mulI = GMonad.updateIP
+mulI = do
+    curNode <- GMonad.peekIP >>= return . Maybe.fromJust
+
+    argNodes <- GMonad.nodesOut (EL.mk "arg") curNode
+    outNodes <- GMonad.nodesOut (EL.mk "out") curNode
+
+    Monad.unless (all (Maybe.isJust . IN.toFloat . GN.toInst) argNodes)
+        (error "Instruction mul should have numeric arg arguments")
+
+    let input = map (Maybe.fromJust . IN.toFloat . GN.toInst) argNodes
+        result = product input
+    mapM_ (GMonad.reLabel (IN.mk (show result))) outNodes
+
+    GMonad.updateIP
 
 
 
 subI :: GraspM ()
-subI = GMonad.updateIP
+subI = do
+    curNode <- GMonad.peekIP >>= return . Maybe.fromJust
+
+    leftNodes <- GMonad.nodesOut (EL.mk "left") curNode
+    rightNodes <- GMonad.nodesOut (EL.mk "right") curNode
+    outNodes <- GMonad.nodesOut (EL.mk "out") curNode
+
+    Monad.when (length leftNodes /= 1) (error "Instruction sub should have one left argument")
+    Monad.unless (all (Maybe.isJust . IN.toFloat . GN.toInst) leftNodes)
+        (error "Instruction sub should have numeric left arguments")
+    Monad.unless (all (Maybe.isJust . IN.toFloat . GN.toInst) rightNodes)
+        (error "Instruction sub should have numeric right arguments")
+
+    let inputFunc = Maybe.fromJust . IN.toFloat . GN.toInst
+        result = (inputFunc (head leftNodes)) - (sum (map inputFunc rightNodes))
+    mapM_ (GMonad.reLabel (IN.mk (show result))) outNodes
+
+    GMonad.updateIP
 
 
 
 divI :: GraspM ()
-divI = GMonad.updateIP
+divI = do
+    curNode <- GMonad.peekIP >>= return . Maybe.fromJust
+
+    leftNodes <- GMonad.nodesOut (EL.mk "left") curNode
+    rightNodes <- GMonad.nodesOut (EL.mk "right") curNode
+    outNodes <- GMonad.nodesOut (EL.mk "out") curNode
+
+    Monad.when (length leftNodes /= 1) (error "Instruction div should have one left argument")
+    Monad.unless (all (Maybe.isJust . IN.toFloat . GN.toInst) leftNodes)
+        (error "Instruction div should have numeric left arguments")
+    Monad.unless (all (Maybe.isJust . IN.toFloat . GN.toInst) rightNodes)
+        (error "Instruction div should have numeric right arguments")
+
+    let inputFunc = Maybe.fromJust . IN.toFloat . GN.toInst
+        result = (inputFunc (head leftNodes)) / (sum (map inputFunc rightNodes))
+    mapM_ (GMonad.reLabel (IN.mk (show result))) outNodes
+
+    GMonad.updateIP
 
 
 
 modI :: GraspM ()
-modI = GMonad.updateIP
+modI = do
+    curNode <- GMonad.peekIP >>= return . Maybe.fromJust
+
+    leftNodes <- GMonad.nodesOut (EL.mk "left") curNode
+    rightNodes <- GMonad.nodesOut (EL.mk "right") curNode
+    outNodes <- GMonad.nodesOut (EL.mk "out") curNode
+
+    Monad.when (length leftNodes /= 1) (error "Instruction mod should have one left argument")
+    Monad.when (length rightNodes /= 1) (error "Instruction mod should have one right argument")
+    Monad.unless (all (Maybe.isJust . IN.toInt . GN.toInst) leftNodes)
+        (error "Instruction mod should have integer left arguments")
+    Monad.unless (all (Maybe.isJust . IN.toInt . GN.toInst) rightNodes)
+        (error "Instruction mod should have integer right arguments")
+
+    let inputFunc = Maybe.fromJust . IN.toInt . GN.toInst
+        result = (inputFunc (head leftNodes)) `mod` (inputFunc (head rightNodes))
+    mapM_ (GMonad.reLabel (IN.mk (show result))) outNodes
+
+    GMonad.updateIP
 
 
 
