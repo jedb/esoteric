@@ -13,7 +13,9 @@ module Grasp.Monad (
     peekIP,
     nextIP,
 
-    nodesOut
+    nodesOut,
+    reLabel,
+    insEdge
     ) where
 
 
@@ -39,7 +41,7 @@ import qualified Data.List as List
 import Data.Map( Map )
 import qualified Data.Map as Map
 
-import Grasp.Graph( Node, LNode, LEdge, Gr )
+import Grasp.Graph( Node, LNode, LEdge, Gr, (&) )
 import qualified Grasp.Graph as Graph
 
 import Grasp.Types.IP( IP )
@@ -308,4 +310,24 @@ nodesOut s n = do
         result = map (\(x,y) -> GN.mk (x, Maybe.fromJust (Graph.lab gr x))) filtered
 
     if (Maybe.isNothing curNode) then return [] else return result
+
+
+
+reLabel :: Instruction -> GNode -> GraspM ()
+reLabel i n = do
+    (gr, ips, fh) <- State.get
+
+    let (mc, d) = Graph.match (GN.toNode n) gr
+        c = Maybe.fromJust mc
+        c' = (\(w,x,y,z) -> (w,x,i,z)) $ c
+
+    Monad.when (Maybe.isJust mc) (State.put ((c' & d) ,ips, fh))
+
+
+
+insEdge :: GEdge -> GraspM ()
+insEdge e = do
+    (gr, ips, fh) <- State.get
+    let gr' = Graph.insEdge (GE.toLEdge e) gr
+    State.put (gr', ips, fh)
 
