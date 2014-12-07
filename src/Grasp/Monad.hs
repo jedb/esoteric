@@ -15,6 +15,11 @@ module Grasp.Monad (
 
     nodesOut, edgesOut,
     reLabel,
+    nodesWithName,
+    subGraph,
+    newNodes,
+    insNode, insNodes,
+    delNode, delNodes,
     insEdge, insEdges,
     delEdge, delEdges
     ) where
@@ -81,7 +86,7 @@ construct (ns,es) = do
     Monad.when (noMain ns es) (error "could not find grasp:main")
 
     let graph = Graph.mkGraph (map GN.toLNode ns) (map GE.toLEdge es)
-        ips = map IP.singleton (nodesWithName ns es "grasp:main")
+        ips = map IP.singleton (getNodesWithName ns es "grasp:main")
         handles = Map.empty
 
     State.put (graph, ips, handles)
@@ -111,14 +116,14 @@ nameNodeList ns es =
 
 
 
-nodesWithName :: [GNode] -> [GEdge] -> String -> [GNode]
-nodesWithName ns es name =
+getNodesWithName :: [GNode] -> [GEdge] -> String -> [GNode]
+getNodesWithName ns es name =
     (map fst) . (filter (\x -> (GN.toInst . snd $ x) == (IN.mk name))) $ (nameNodeList ns es)
 
 
 
-namedNodes :: [GNode] -> [GEdge] -> [GNode]
-namedNodes ns es = map fst (nameNodeList ns es)
+getNamedNodes :: [GNode] -> [GEdge] -> [GNode]
+getNamedNodes ns es = map fst (nameNodeList ns es)
 
 
 
@@ -176,7 +181,7 @@ garbageCollect gr ips =
 
 reachable :: Gr Instruction EdgeLabel -> [IP] -> [Node]
 reachable gr ips =
-    let named = namedNodes (map GN.mk (Graph.labNodes gr)) (map GE.mk (Graph.labEdges gr))
+    let named = getNamedNodes (map GN.mk (Graph.labNodes gr)) (map GE.mk (Graph.labEdges gr))
         ipNodes = concatMap IP.toList ips
         start = (map GN.toNode) . List.nub $ named ++ ipNodes
     in reach gr start []
@@ -335,6 +340,66 @@ reLabel i n = do
         c' = (\(w,x,y,z) -> (w,x,i,z)) $ c
 
     Monad.when (Maybe.isJust mc) (State.put ((c' & d) ,ips, fh))
+
+
+
+nodesWithName :: Instruction -> GraspM [GNode]
+nodesWithName x = do
+    (gr, ips, fh) <- State.get
+    let ns = map GN.mk (Graph.labNodes gr)
+        es = map GE.mk (Graph.labEdges gr)
+    return (getNodesWithName ns es (IN.toString x))
+
+
+
+subGraph :: GNode -> GraspM ([GNode],[GEdge])
+subGraph n = do
+    (gr, ips, fh) <- State.get
+    let rNodes = reach gr [GN.toNode n] []
+        rEdges = filter (\(x,y,z) -> x `elem` rNodes && y `elem` rNodes) (Graph.labEdges gr)
+        result = (map (\x -> GN.mk (x, Maybe.fromJust (Graph.lab gr x))) rNodes, map GE.mk rEdges)
+    return result
+
+
+
+newNodes :: [Instruction] -> GraspM [GNode]
+newNodes is = do
+    (gr, ips, fh) <- State.get
+    let newNs = Graph.newNodes (length is) gr
+        newGNs = map GN.mk (zip newNs is)
+    return newGNs
+
+
+
+insNode :: GNode -> GraspM ()
+insNode n = do
+    (gr, ips, fh) <- State.get
+    let gr' = Graph.insNode (GN.toLNode n) gr
+    State.put (gr', ips, fh)
+
+
+
+insNodes :: [GNode] -> GraspM ()
+insNodes ns = do
+    (gr, ips, fh) <- State.get
+    let gr' = Graph.insNodes (map GN.toLNode ns) gr
+    State.put (gr', ips, fh)
+
+
+
+delNode :: GNode -> GraspM ()
+delNode n = do
+    (gr, ips, fh) <- State.get
+    let gr' = Graph.delNode (GN.toNode n) gr
+    State.put (gr', ips, fh)
+
+
+
+delNodes :: [GNode] -> GraspM ()
+delNodes ns = do
+    (gr, ips, fh) <- State.get
+    let gr' = Graph.delNodes (map GN.toNode ns) gr
+    State.put (gr', ips, fh)
 
 
 

@@ -152,12 +152,50 @@ pickI = GMonad.updateIP
 
 
 callI :: GraspM ()
-callI = GMonad.updateIP
+callI = do
+    curNode <- GMonad.peekIP >>= return . Maybe.fromJust
+
+    funcNodes <- GMonad.nodesOut (EL.mk "func") curNode
+    argEdges <- GMonad.edgesOut curNode
+    ae <- return (filter (\x -> (GE.toLabel x) /= (EL.mk "name") && (GE.toLabel x) /= (EL.mk "cond") &&
+                                (GE.toLabel x) /= (EL.mk "next") && (GE.toLabel x) /= (EL.mk "func")) argEdges)
+    possibleFuncs <- mapM GMonad.nodesWithName (map GN.toInst funcNodes) >>= return . concat
+
+    Monad.when (length possibleFuncs < 1) (error "Instruction call has no applicable func candidates")
+
+    r <- liftIO (Random.getStdRandom (Random.randomR (0, length possibleFuncs - 1)))
+    (sn, se) <- GMonad.subGraph (possibleFuncs !! r)
+
+    sn' <- GMonad.newNodes (map GN.toInst sn)
+    let nodeMap = zip (map GN.toNode sn) (map GN.toNode sn')
+        translate = Maybe.fromJust . (flip lookup nodeMap)
+    se' <- return (map (\x -> GE.mk (translate . GE.toSrc $ x, translate . GE.toDest $ x, GE.toLabel x)) se)
+
+    let calledNode = GN.mk (translate (GN.toNode (possibleFuncs !! r)), GN.toInst (possibleFuncs !! r))
+    ae' <- return (map (\x -> GE.mk (GN.toNode calledNode, GE.toDest x, GE.toLabel x)) ae)
+
+    GMonad.insNodes sn'
+    GMonad.insEdges (se' ++ ae')
+
+    GMonad.pushIP calledNode
 
 
 
 retI :: GraspM ()
-retI = GMonad.updateIP
+retI = do
+    curNode <- GMonad.peekIP >>= return . Maybe.fromJust
+
+    retEdges <- GMonad.edgesOut curNode
+    re <- return (filter (\x -> (GE.toLabel x) /= (EL.mk "name") && (GE.toLabel x) /= (EL.mk "next") &&
+                                (GE.toLabel x) /= (EL.mk "cond")) retEdges)
+
+    GMonad.popIP
+    GMonad.updateIP
+    curNode' <- GMonad.peekIP
+
+    Monad.when (Maybe.isJust curNode') (do
+        re' <- return (map (\x -> GE.mk (GN.toNode . Maybe.fromJust $ curNode', GE.toDest x, GE.toLabel x)) re)
+        GMonad.insEdges re' )
 
 
 
