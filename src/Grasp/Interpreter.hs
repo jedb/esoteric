@@ -112,7 +112,22 @@ newI = do
 
 
 delI :: GraspM ()
-delI = GMonad.updateIP
+delI = do
+    curNode <- GMonad.peekIP >>= return . Maybe.fromJust
+
+    tailNodes <- GMonad.nodesOut (EL.mk "tail") curNode
+    headNodes <- GMonad.nodesOut (EL.mk "head") curNode
+    labelNodes <- GMonad.nodesOut (EL.mk "label") curNode
+
+    Monad.when (length tailNodes /= 0) (do
+        input <- mapM GMonad.edgesOut tailNodes >>= return . concat
+        let labels = map (EL.mk . IN.toString . GN.toInst) labelNodes
+            heads = map GN.toNode headNodes
+            result = filter (\x -> (length headNodes == 0 || GE.toDest x `elem` heads) &&
+                                    (length labelNodes == 0 || GE.toLabel x `elem` labels)) input
+        GMonad.delEdges result )
+
+    GMonad.updateIP
 
 
 

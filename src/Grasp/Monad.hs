@@ -13,9 +13,10 @@ module Grasp.Monad (
     peekIP,
     nextIP,
 
-    nodesOut,
+    nodesOut, edgesOut,
     reLabel,
-    insEdge
+    insEdge, insEdges,
+    delEdge, delEdges
     ) where
 
 
@@ -313,6 +314,18 @@ nodesOut s n = do
 
 
 
+edgesOut :: GNode -> GraspM [GEdge]
+edgesOut n = do
+    (gr, ips, fh) <- State.get
+    curNode <- peekIP
+
+    let eout = Graph.out gr (GN.toNode (Maybe.fromJust curNode))
+        result = map GE.mk eout
+
+    if (Maybe.isNothing curNode) then return [] else return result
+
+
+
 reLabel :: Instruction -> GNode -> GraspM ()
 reLabel i n = do
     (gr, ips, fh) <- State.get
@@ -329,5 +342,29 @@ insEdge :: GEdge -> GraspM ()
 insEdge e = do
     (gr, ips, fh) <- State.get
     let gr' = Graph.insEdge (GE.toLEdge e) gr
+    State.put (gr', ips, fh)
+
+
+
+insEdges :: [GEdge] -> GraspM ()
+insEdges es = do
+    (gr, ips, fh) <- State.get
+    let gr' = Graph.insEdges (map GE.toLEdge es) gr
+    State.put (gr', ips, fh)
+
+
+
+delEdge :: GEdge -> GraspM ()
+delEdge e = do
+    (gr, ips, fh) <- State.get
+    let gr' = Graph.delLEdge (GE.toLEdge e) gr
+    State.put (gr', ips, fh)
+
+
+
+delEdges :: [GEdge] -> GraspM ()
+delEdges es = do
+    (gr, ips, fh) <- State.get
+    let gr' = List.foldl' (flip Graph.delLEdge) gr (map GE.toLEdge es)
     State.put (gr', ips, fh)
 
