@@ -132,22 +132,117 @@ delI = do
 
 
 pushI :: GraspM ()
-pushI = GMonad.updateIP
+pushI = do
+    curNode <- GMonad.peekIP >>= return . Maybe.fromJust
+
+    stackNodes <- GMonad.nodesOut (EL.mk "stack") curNode
+    inNodes <- GMonad.nodesOut (EL.mk "in") curNode
+
+    Monad.when (length stackNodes /= 1) (error "Instruction push should have one stack argument")
+
+    r <- liftIO (Random.getStdRandom (Random.randomR (0, length inNodes - 1)))
+    let stackInst = if (length inNodes == 0) then IN.mk "" else GN.toInst (inNodes !! r)
+
+    n <- GMonad.newNodes [stackInst]
+    ne <- return (GE.mk (GN.toNode (head n), GN.toNode (head stackNodes), EL.mk "next"))
+    se <- GMonad.edgesIn (head stackNodes)
+    se' <- return (map (\x -> GE.mk (GE.toSrc x, GN.toNode (head n), GE.toLabel x)) se)
+
+    GMonad.delEdges se
+    GMonad.insNode (head n)
+    GMonad.insEdges (ne:se')
+
+    GMonad.updateIP
 
 
 
 implicitPushI :: GraspM ()
-implicitPushI = GMonad.updateIP
+implicitPushI = do
+    curNode <- GMonad.peekIP >>= return . Maybe.fromJust
+
+    stackNodes <- GMonad.nodesOut (EL.mk "stack") curNode
+
+    Monad.when (length stackNodes /= 1) (error "Instruction implicit push should have one stack argument")
+
+    n <- GMonad.newNodes [GN.toInst curNode]
+    ne <- return (GE.mk (GN.toNode (head n), GN.toNode (head stackNodes), EL.mk "next"))
+    se <- GMonad.edgesIn (head stackNodes)
+    se' <- return (map (\x -> GE.mk (GE.toSrc x, GN.toNode (head n), GE.toLabel x)) se)
+
+    GMonad.delEdges se
+    GMonad.insNode (head n)
+    GMonad.insEdges (ne:se')
+
+    GMonad.updateIP
 
 
 
 popI :: GraspM ()
-popI = GMonad.updateIP
+popI = do
+    curNode <- GMonad.peekIP >>= return . Maybe.fromJust
+
+    stackNodes <- GMonad.nodesOut (EL.mk "stack") curNode
+    outNodes <- GMonad.nodesOut (EL.mk "out") curNode
+    emptyNodes <- GMonad.nodesOut (EL.mk "empty") curNode
+
+    Monad.when (length stackNodes /= 1) (error "Instruction pop should have one stack argument")
+
+    nextNodes <- GMonad.nodesOut (EL.mk "next") (head stackNodes)
+
+    Monad.when (length nextNodes > 1) (error "Stack nodes should have at most one next edge")
+
+    if (length nextNodes == 1) then do
+        mapM_ (GMonad.reLabel (GN.toInst (head stackNodes))) outNodes
+
+        se <- GMonad.edgesIn (head stackNodes)
+        se' <- return (map (\x -> GE.mk (GE.toSrc x, GN.toNode (head nextNodes), GE.toLabel x)) se)
+
+        GMonad.delEdges se
+        GMonad.insEdges se'
+    else do
+        Monad.when (length emptyNodes > 0) (do
+            r <- liftIO (Random.getStdRandom (Random.randomR (0, length emptyNodes - 1)))
+            mapM_ (GMonad.reLabel (GN.toInst (emptyNodes !! r))) outNodes )
+
+    GMonad.updateIP
 
 
 
 pickI :: GraspM ()
-pickI = GMonad.updateIP
+pickI = do
+    curNode <- GMonad.peekIP >>= return . Maybe.fromJust
+
+    stackNodes <- GMonad.nodesOut (EL.mk "stack") curNode
+    depthNodes <- GMonad.nodesOut (EL.mk "depth") curNode
+    outNodes <- GMonad.nodesOut (EL.mk "out") curNode
+    emptyNodes <- GMonad.nodesOut (EL.mk "empty") curNode
+
+    Monad.when (length stackNodes /= 1) (error "Instruction pick should have one stack argument")
+    Monad.when (length depthNodes /= 1) (error "Instruction pick should have one depth argument")
+    Monad.unless (Maybe.isJust . IN.toInt . GN.toInst $ (head depthNodes))
+        (error "Depth argument to instruction pick should be an integer")
+    Monad.unless ((>=0) . Maybe.fromJust . IN.toInt . GN.toInst $ (head depthNodes))
+        (error "Depth argument to instruction pick should be positive")
+
+    let depthFunc d n = do
+        nextNodes <- GMonad.nodesOut (EL.mk "next") n
+        Monad.when (length nextNodes > 1) (error "Stack nodes should have at most one next edge")
+        if (length nextNodes == 0)
+            then return Nothing
+            else if (d == 0)
+                then return (Just n)
+                else depthFunc (d - 1) (head nextNodes)
+
+    pickNode <- depthFunc (Maybe.fromJust . IN.toInt . GN.toInst $ (head depthNodes)) (head stackNodes)
+
+    if (Maybe.isJust pickNode) then do
+        mapM_ (GMonad.reLabel (GN.toInst (Maybe.fromJust pickNode))) outNodes
+    else do
+        Monad.when (length emptyNodes > 0) (do
+            r <- liftIO (Random.getStdRandom (Random.randomR (0, length emptyNodes - 1)))
+            mapM_ (GMonad.reLabel (GN.toInst (emptyNodes !! r))) outNodes )
+
+    GMonad.updateIP
 
 
 

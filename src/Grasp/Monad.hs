@@ -13,7 +13,7 @@ module Grasp.Monad (
     peekIP,
     nextIP,
 
-    nodesOut, edgesOut,
+    nodesOut, edgesOut, edgesIn,
     reLabel,
     nodesWithName,
     subGraph,
@@ -326,6 +326,18 @@ edgesOut n = do
 
     let eout = Graph.out gr (GN.toNode (Maybe.fromJust curNode))
         result = map GE.mk eout
+
+    if (Maybe.isNothing curNode) then return [] else return result
+
+
+
+edgesIn :: GNode -> GraspM [GEdge]
+edgesIn n = do
+    (gr, ips, fh) <- State.get
+    curNode <- peekIP
+
+    let ein = Graph.inn gr (GN.toNode (Maybe.fromJust curNode))
+        result = map GE.mk ein
 
     if (Maybe.isNothing curNode) then return [] else return result
 
