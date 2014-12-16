@@ -133,7 +133,7 @@ getNamedNodes ns es = map fst (nameNodeList ns es)
 
 
 multiNodes :: [GNode] -> Bool
-multiNodes ns = (ns == (List.nubBy (\x y -> GN.toNode x == GN.toNode y) ns))
+multiNodes ns = (ns /= (List.nubBy (\x y -> GN.toNode x == GN.toNode y) ns))
 
 
 
@@ -148,7 +148,7 @@ unconnected ns es =
 multiNames :: [GNode] -> [GEdge] -> Bool
 multiNames ns es =
     let named = map fst (nameNodeList ns es)
-    in named == (List.nub named)
+    in named /= (List.nub named)
 
 
 
@@ -163,7 +163,7 @@ noMain :: [GNode] -> [GEdge] -> Bool
 noMain ns es =
     let names = map snd (nameNodeList ns es)
         mains = filter ((== (IN.mk "grasp:main")) . GN.toInst) names
-    in length mains /= 0
+    in length mains == 0
 
 
 
