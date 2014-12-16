@@ -406,7 +406,7 @@ getcI = do
 
     Monad.when (length fhNodes > 1) (error "Instruction getc should have at most one fh argument")
 
-    let fh = IN.toString . GN.toInst . head $ fhNodes
+    let fh = IN.toString . GN.toInst $ head fhNodes
     handle <- if (length fhNodes == 0) then return IO.stdin else GMonad.getReadHandle fh
 
     c <- liftIO (IO.hGetChar handle)
@@ -427,13 +427,13 @@ putcI = do
     Monad.when (length inNodes < 1) (error "Instruction putc should have at least one in argument")
     Monad.when (length fhNodes > 1) (error "Instruction putc should have at most one fh argument")
 
-    r <- liftIO (Random.getStdRandom (Random.randomR (0, length inNodes -1)))
+    r <- liftIO (Random.getStdRandom (Random.randomR (0, length inNodes - 1)))
     let rIn = IN.toInt . GN.toInst $ inNodes !! r
 
     Monad.unless (Maybe.isJust rIn) (error "Instruction putc should have integer in argument")
     Monad.unless ((>=0) (Maybe.fromJust rIn)) (error "Instruction putc should have positive in argument")
 
-    let fh = IN.toString . GN.toInst . head $ fhNodes
+    let fh = IN.toString . GN.toInst $ head fhNodes
     handle <- if (length fhNodes == 0) then return IO.stdout else GMonad.getWriteHandle fh
     liftIO (IO.hPutChar handle (Char.chr (Maybe.fromJust rIn)))
 
@@ -442,10 +442,73 @@ putcI = do
 
 
 getsI :: GraspM ()
-getsI = GMonad.updateIP
+getsI = do
+    curNode <- GMonad.peekIP >>= return . Maybe.fromJust
+
+    outNodes <- GMonad.nodesOut (EL.mk "out") curNode
+    labelNodes <- GMonad.nodesOut (EL.mk "label") curNode
+    fhNodes <- GMonad.nodesOut (EL.mk "fh") curNode
+
+    Monad.when (length outNodes /= 1) (error "Instruction gets should have one out argument")
+    Monad.when (length labelNodes /= 1) (error "Instruction gets should have one label argument")
+    Monad.when (length fhNodes > 1) (error "Instruction gets should have at most one fh argument")
+
+    let fh = IN.toString . GN.toInst $ head fhNodes
+    handle <- if (length fhNodes == 0) then return IO.stdin else GMonad.getReadHandle fh
+    input <- liftIO (IO.hGetLine handle) >>= (\x -> if (last x == '\n') then return (init x) else return x)
+
+    let unicode = (map Char.ord input) ++ [0]
+    nodes <- GMonad.newNodes (map (IN.mk . show) unicode)
+
+    let nextEdges = map (\(x,y) -> GE.mk (GN.toNode x, GN.toNode y, EL.mk "next")) (zip nodes (tail nodes))
+        headLabel = EL.mk . IN.toString . GN.toInst $ (head labelNodes)
+        headEdge = GE.mk (GN.toNode (head outNodes), GN.toNode (head nodes), headLabel)
+    edges <- return (headEdge : nextEdges)
+
+    GMonad.insNodes nodes
+    GMonad.insEdges edges
+
+    GMonad.updateIP
 
 
 
 putsI :: GraspM ()
-putsI = GMonad.updateIP
+putsI = do
+    curNode <- GMonad.peekIP >>= return . Maybe.fromJust
+
+    inNodes <- GMonad.nodesOut (EL.mk "in") curNode
+    nlNodes <- GMonad.nodesOut (EL.mk "nl") curNode
+    fhNodes <- GMonad.nodesOut (EL.mk "fh") curNode
+
+    Monad.when (length inNodes == 0) (error "Instruction puts should have at least one in argument")
+    Monad.when (length nlNodes > 1) (error "Instruction puts should have at most one nl argument")
+    Monad.when (length fhNodes > 1) (error "Instruction puts should have at most one fh argument")
+
+    let fh = IN.toString . GN.toInst $ head fhNodes
+    handle <- if (length fhNodes == 0) then return IO.stdout else GMonad.getWriteHandle fh
+
+    let nl = IN.toFloat . GN.toInst $ head nlNodes
+    newLine <- if (length nlNodes == 0 || Maybe.isNothing nl || Maybe.fromJust nl /= 0)
+                then return "\n" else return ""
+
+    r <- liftIO (Random.getStdRandom (Random.randomR (0, length inNodes - 1)))
+    let input = inNodes !! r
+
+    let decodeFunc n acc = do
+            let curValue = IN.toInt . GN.toInst $ n
+            nextNodes <- GMonad.nodesOut (EL.mk "next") n
+            Monad.when (length nextNodes > 1) (error "Stack nodes should have at most one next edge")
+            Monad.when (Maybe.isNothing curValue) (error "Instruction puts requires a stack with integer values")
+            if (length nextNodes == 0)
+                then if (Maybe.fromJust curValue /= 0)
+                        then error "Instruction puts requires a zero terminated stack"
+                        else return (reverse acc)
+                else decodeFunc (head nextNodes) ((Char.chr . Maybe.fromJust $ curValue):acc)
+
+    output <- if (Maybe.isNothing . IN.toInt . GN.toInst $ input)
+                then return (IN.toString . GN.toInst $ input)
+                else decodeFunc input []
+    liftIO (IO.hPutStr handle (output ++ newLine))
+
+    GMonad.updateIP
 
