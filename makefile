@@ -6,13 +6,14 @@ EXECUTABLES  =  ${OUTPUTDIR}/test \
                 ${OUTPUTDIR}/fractran \
                 ${OUTPUTDIR}/thue \
                 ${OUTPUTDIR}/unlambda \
-                ${OUTPUTDIR}/brainfuck
+                ${OUTPUTDIR}/brainfuck \
+                ${OUTPUTDIR}/grasp
 
 SWITCHES = -XDeriveDataTypeable
 
 
 
-all: testprog fractranprog thueprog unlambdaprog brainfuckprog
+all: testprog fractranprog thueprog unlambdaprog brainfuckprog graspprog
 
 
 clean:
@@ -43,3 +44,7 @@ unlambdaprog:
 brainfuckprog:
 	cd ${SOURCEDIR}; \
 	ghc ${SWITCHES} --make brainfuck.hs -o ../${OUTPUTDIR}/brainfuck
+
+graspprog:
+	cd ${SOURCEDIR}; \
+	ghc ${SWITCHES} --make grasp.hs -o ../${OUTPUTDIR}/grasp
