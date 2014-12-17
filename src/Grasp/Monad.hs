@@ -309,37 +309,34 @@ nextIP = do
 nodesOut :: EdgeLabel -> GNode -> GraspM [GNode]
 nodesOut s n = do
     (gr, ips, fh) <- State.get
-    curNode <- peekIP
 
-    let nout = Graph.lsuc gr (GN.toNode (Maybe.fromJust curNode))
+    let nout = Graph.lsuc gr (GN.toNode n)
         filtered = filter ((== s) . snd) nout
         result = map (\(x,y) -> GN.mk (x, Maybe.fromJust (Graph.lab gr x))) filtered
 
-    if (Maybe.isNothing curNode) then return [] else return result
+    return result
 
 
 
 edgesOut :: GNode -> GraspM [GEdge]
 edgesOut n = do
     (gr, ips, fh) <- State.get
-    curNode <- peekIP
 
-    let eout = Graph.out gr (GN.toNode (Maybe.fromJust curNode))
+    let eout = Graph.out gr (GN.toNode n)
         result = map GE.mk eout
 
-    if (Maybe.isNothing curNode) then return [] else return result
+    return result
 
 
 
 edgesIn :: GNode -> GraspM [GEdge]
 edgesIn n = do
     (gr, ips, fh) <- State.get
-    curNode <- peekIP
 
-    let ein = Graph.inn gr (GN.toNode (Maybe.fromJust curNode))
+    let ein = Graph.inn gr (GN.toNode n)
         result = map GE.mk ein
 
-    if (Maybe.isNothing curNode) then return [] else return result
+    return result
 
 
 
