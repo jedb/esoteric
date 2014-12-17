@@ -86,7 +86,7 @@ construct (ns,es) = do
     Monad.when (noMain ns es) (error "could not find grasp:main")
 
     let graph = Graph.mkGraph (map GN.toLNode ns) (map GE.toLEdge es)
-        ips = map IP.singleton (getNodesWithName ns es "grasp:main")
+        ips = map (IP.singleton . GN.toNode) (getNodesWithName ns es "grasp:main")
         handles = Map.empty
 
     State.put (graph, ips, handles)
@@ -183,7 +183,7 @@ reachable :: Gr Instruction EdgeLabel -> [IP] -> [Node]
 reachable gr ips =
     let named = getNamedNodes (map GN.mk (Graph.labNodes gr)) (map GE.mk (Graph.labEdges gr))
         ipNodes = concatMap IP.toList ips
-        start = (map GN.toNode) . List.nub $ named ++ ipNodes
+        start = List.nub $ (map GN.toNode named) ++ ipNodes
     in reach gr start []
 
 
@@ -258,7 +258,7 @@ updateIP = do
         nexts <- nodesOut (EL.mk "next") (Maybe.fromJust curNode)
         r <- liftIO (Random.getStdRandom (Random.randomR (0, length nexts - 1)))
 
-        let updated = if (length nexts == 0) then IP.empty else IP.shift (nexts !! r) (head ips)
+        let updated = if (length nexts == 0) then IP.empty else IP.shift (GN.toNode (nexts !! r)) (head ips)
             ips' = updated:(tail ips)
 
         State.put (gr, ips', fh) )
@@ -268,7 +268,7 @@ updateIP = do
 pushIP :: GNode -> GraspM ()
 pushIP n = do
     (gr, ips, fh) <- State.get
-    let ips' = if (length ips == 0) then [] else (IP.push n (head ips)):(tail ips)
+    let ips' = if (length ips == 0) then [] else (IP.push (GN.toNode n) (head ips)):(tail ips)
     State.put (gr, ips', fh)
 
 
@@ -284,7 +284,11 @@ popIP = do
 peekIP :: GraspM (Maybe GNode)
 peekIP = do
     (gr, ips, fh) <- State.get
-    if (length ips == 0) then return Nothing else return (IP.peek (head ips))
+    if (length ips == 0) then return Nothing
+        else return (do
+            node <- IP.peek (head ips)
+            label <- Graph.lab gr node
+            return (GN.mk (node, label)) )
 
 
 

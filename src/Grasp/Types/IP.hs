@@ -15,18 +15,18 @@ module Grasp.Types.IP (
 
 
 
-import Grasp.Types.GNode( GNode )
+import Grasp.Graph( Node )
 
 
 
 
-newtype IP = IP [GNode]
+newtype IP = IP [Node]
     deriving (Eq, Show)
 
 
 
 
-singleton :: GNode -> IP
+singleton :: Node -> IP
 singleton n = IP [n]
 
 empty :: IP
@@ -35,18 +35,18 @@ empty = IP []
 isEmpty :: IP -> Bool
 isEmpty (IP p) = (length p == 0)
 
-peek :: IP -> Maybe GNode
+peek :: IP -> Maybe Node
 peek (IP p) = if (length p == 0) then Nothing else Just (head p)
 
-push :: GNode -> IP -> IP
+push :: Node -> IP -> IP
 push n (IP p) = IP (n:p)
 
 pop :: IP -> IP
 pop (IP p) = if (length p == 0) then empty else IP (tail p)
 
-shift :: GNode -> IP -> IP
+shift :: Node -> IP -> IP
 shift n (IP p) = if (length p == 0) then empty else IP (n:(tail p))
 
-toList :: IP -> [GNode]
+toList :: IP -> [Node]
 toList (IP p) = p
 
