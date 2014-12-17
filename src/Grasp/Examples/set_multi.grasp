@@ -1,0 +1,12 @@
+digraph {
+	1 [label="set"]
+	2 [label="grasp:main"]
+	3 [label="abc"]
+	4 [label="def"]
+	5 [label="out"]
+
+	1 -> 2 [label="name"]
+	1 -> 3 [label="in"]
+	1 -> 4 [label="in"]
+	1 -> 5 [label="out"]
+}

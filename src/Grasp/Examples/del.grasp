@@ -1,0 +1,7 @@
+digraph {
+	1 [label="del"]
+	2 [label="grasp:main"]
+
+	1 -> 2 [label="name"]
+	1 -> 1 [label="tail"]
+}

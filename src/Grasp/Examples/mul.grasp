@@ -1,0 +1,16 @@
+digraph {
+	1 [label="mul"]
+	2 [label="grasp:main"]
+	3 [label="2"]
+	4 [label="5.3"]
+	5 [label="3"]
+	6 [label="out1"]
+	7 [label="out2"]
+
+	1 -> 2 [label="name"]
+	1 -> 3 [label="arg"]
+	1 -> 4 [label="arg"]
+	1 -> 5 [label="arg"]
+	1 -> 6 [label="out"]
+	1 -> 7 [label="out"]
+}

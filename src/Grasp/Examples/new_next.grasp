@@ -1,0 +1,11 @@
+digraph {
+	1 [label="new"]
+	2 [label="grasp:main"]
+	3 [label="next"]
+	4 [label="set"]
+
+	1 -> 2 [label="name"]
+	1 -> 1 [label="tail"]
+	1 -> 4 [label="head"]
+	1 -> 3 [label="label"]
+}

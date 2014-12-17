@@ -1,0 +1,6 @@
+digraph {
+	1 [label="ret"];
+	2 [label="grasp:main"];
+
+	1 -> 2 [label="name"];
+}

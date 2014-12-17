@@ -1,0 +1,10 @@
+digraph {
+	1 [label="div"]
+	2 [label="grasp:main"]
+	3 [label="15"]
+	4 [label="out"]
+
+	1 -> 2 [label="name"]
+	1 -> 3 [label="left"]
+	1 -> 4 [label="out"]
+}
