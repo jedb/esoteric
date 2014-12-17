@@ -295,11 +295,8 @@ peekIP = do
 nextIP :: GraspM ()
 nextIP = do
     (gr, ips, fh) <- State.get
-    let ips' = if (length ips == 0)
-                then []
-                else if (IP.isEmpty (head ips))
-                        then tail ips
-                        else (tail ips) ++ [head ips]
+    let nonEmpties = filter (not . IP.isEmpty) ips
+        ips' = if (length nonEmpties == 0) then [] else (tail ips) ++ [head ips]
         gr' = garbageCollect gr ips'
     State.put (gr', ips', fh)
 
