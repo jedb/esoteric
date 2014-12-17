@@ -407,7 +407,9 @@ getcI = do
     Monad.when (length fhNodes > 1) (error "Instruction getc should have at most one fh argument")
 
     let fh = IN.toString . GN.toInst $ head fhNodes
-    handle <- if (length fhNodes == 0) then return IO.stdin else GMonad.getReadHandle fh
+    handle <- if (length fhNodes == 0)
+                then liftIO (IO.hSetBuffering IO.stdin IO.NoBuffering) >> return IO.stdin
+                else GMonad.getReadHandle fh
 
     c <- liftIO (IO.hGetChar handle)
     let result = if (c == '\EOT') then -1 else Char.ord c
