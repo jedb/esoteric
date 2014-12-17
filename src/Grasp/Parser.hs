@@ -34,7 +34,7 @@ parseGrasp input =
 
 -- removes comments but otherwise leaves input unchanged
 
-removeComments = gline `sepEndBy` eol >>= return . concat
+removeComments = gline `sepEndBy` eol >>= return . concat . (map (++ "\n"))
 
 
 eol  =  try (string "\r\n")
@@ -48,11 +48,18 @@ gline = many thing >>= return . concat
 
 
 thing = try (some (noneOf "\r\n\"/#"))
-    <|> try (quotedString >>= return . ("\"" ++) . (++ "\""))
+    <|> try quotedNonComment
     <|> try singleLineComment
     <|> try multiLineComment
-    <|> (anyChar >>= return . (:[]) )
+    <|> ((noneOf "\r\n") >>= return . (:[]))
 
+
+quotedNonComment = do
+    char '\"'
+    x <- many (noneOf "\r\n")
+    char '\"'
+    return ("\"" ++ x ++ "\"")
+    
 
 singleLineComment =
         (string "//" >> many (noneOf "\r\n") >> return "")
@@ -70,13 +77,14 @@ multiLineComment = do
 -- parses a DOT graph language file into the data for a grasp program
 
 graspDOT = do
+    whiteSpace
     optional strict
     graphType
     optional ident
     openBrace
     (n,e) <- stmtList ([],[])
     closeBrace
-    many blankLine
+    whiteSpace
     eof
     return (n,e)
 
@@ -98,11 +106,7 @@ stmtList (n,e) =
     <|> try (whiteSpace >> edge >>= (\x -> stmtList (n,x:e)) )
     <|> try (whiteSpace >> attr >> stmtList (n,e))
     <|> try (whiteSpace >> subgraph >>= (\(x,y) -> stmtList ((reverse x) ++ n, (reverse y) ++ e)) )
-    <|> try (blankLine >> stmtList (n,e))
     <|> return (reverse n, reverse e)
-
-
-blankLine = whiteSpace >> eol
 
 
 alphaNumString = do
@@ -212,5 +216,5 @@ caseInsensitiveChar c = char (toLower c) <|> char (toUpper c)
 caseInsensitiveString s = mapM caseInsensitiveChar s
 
 
-whiteSpace = many (oneOf " \t")
+whiteSpace = many (oneOf " \t\r\n")
 
