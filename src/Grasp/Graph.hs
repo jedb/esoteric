@@ -121,11 +121,11 @@ match :: Node -> Gr a b -> Decomp a b
 match n gr =
     if (n `notElem` nodes gr)
     	then (Nothing, gr)
-    	else (Just (to, n, label, from), gr)
+    	else (Just (to, n, label, from), (delNode n gr))
     where
-    	to = map (\(x,y,z) -> (z,y)) (inn gr n)
+    	to = map (\(x,y,z) -> (z,x)) (inn gr n)
     	label = snd . head $ (filter (\(x,y) -> x == n) (labNodes gr))
-    	from = map (\(x,y,z) -> (z,x)) (out gr n)
+    	from = map (\(x,y,z) -> (z,y)) (out gr n)
 
 
 
@@ -172,8 +172,8 @@ labEdges = getLabEdges
 
 (&) :: Context a b -> Gr a b -> Gr a b
 (to, n, lab, from) & gr =
-	let edgesTo = map (\(z,y) -> (n,y,z)) to
-	    edgesFrom = map (\(z,x) -> (x,n,z)) from
+	let edgesTo = map (\(z,y) -> (y,n,z)) to
+	    edgesFrom = map (\(z,x) -> (n,x,z)) from
 	in (insEdges edgesTo) . (insEdges edgesFrom) . (insNode (n,lab)) $ gr
 
 
