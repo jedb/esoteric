@@ -367,7 +367,7 @@ divI = do
         (error "Instruction div should have numeric right arguments")
 
     let inputFunc = Maybe.fromJust . IN.toFloat . GN.toInst
-        result = (inputFunc (head leftNodes)) / (sum (map inputFunc rightNodes))
+        result = (inputFunc (head leftNodes)) / (product (map inputFunc rightNodes))
     mapM_ (GMonad.reLabel (IN.mk (show result))) outNodes
 
     GMonad.updateIP
