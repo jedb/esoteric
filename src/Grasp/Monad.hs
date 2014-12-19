@@ -192,7 +192,7 @@ reach :: Gr Instruction EdgeLabel -> [Node] -> [Node] -> [Node]
 reach _ [] f = f
 reach gr (x:xs) f =
     let f' = List.nub (x:f)
-        x' = List.nub (xs ++ (Graph.suc gr x))
+        x' = List.nub (xs ++ (filter (/= x) (Graph.suc gr x)))
         gr' = Graph.delNode x gr
     in reach gr' x' f'
 
@@ -296,7 +296,7 @@ nextIP :: GraspM ()
 nextIP = do
     (gr, ips, fh) <- State.get
     let nonEmpties = filter (not . IP.isEmpty) ips
-        ips' = if (length nonEmpties == 0) then [] else (tail ips) ++ [head ips]
+        ips' = if (length nonEmpties == 0) then [] else (tail nonEmpties) ++ [head nonEmpties]
         gr' = garbageCollect gr ips'
     State.put (gr', ips', fh)
 
