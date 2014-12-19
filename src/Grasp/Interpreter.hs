@@ -275,7 +275,7 @@ callI = do
     ae' <- return (map (\x -> GE.mk (GN.toNode calledNode, GE.toDest x, GE.toLabel x)) ae)
 
     GMonad.insNodes sn'
-    GMonad.insEdges (se' ++ ae')
+    GMonad.insEdges ((filter ((/= (EL.mk "name")) . GE.toLabel) se') ++ ae')
 
     GMonad.pushIP calledNode
 
