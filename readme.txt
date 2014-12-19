@@ -5,7 +5,7 @@ Usage of each interpreter is of the form:
 
 
 
-The Thue interpreter also has several command line switches:
+The Thue interpreter has several command line switches:
 
     -l      --left      Evaluates applicable rules left to right
     -r      --right     Evaluates applicable rules right to left
@@ -13,6 +13,12 @@ The Thue interpreter also has several command line switches:
 
     -1      --ver1      Uses the version 1 parser/interpreter (default)
     -2      --ver2a     Uses the version 2a parser/interpreter
+
+
+
+The Grasp interpreter has a command line switch:
+
+            --testing   Outputs a before and after of the graph, for debugging
 
 
 
@@ -44,4 +50,12 @@ a . or ? function. All whitespace is ignored.
 Brainfuck files should contain a number of brainfuck commands. All other
 characters are treated as whitespace and summarily ignored. The only
 restriction is that all [ loops must be closed with a corresponding ].
+
+
+
+
+Grasp files follow the DOT graph description language, but for the purposes of
+programming are restricted to digraphs. Everything is ignored except for the nodes,
+edges, and their labels. Nodes may be named arbitrarily - it is the label of the
+node that is important for the grasp program.
 
