@@ -49,26 +49,31 @@ interpret = do
     n <- GMonad.peekIP
 
     if (Maybe.isNothing n) then return () else do
-        case (IN.toString . GN.toInst . Maybe.fromJust $ n) of
-            "set" -> setI
-            "new" -> newI
-            "del" -> delI
-            "push" -> pushI
-            "pop" -> popI
-            "pick" -> pickI
-            "call" -> callI
-            "ret" -> retI
-            "add" -> addI
-            "mul" -> mulI
-            "sub" -> subI
-            "div" -> divI
-            "mod" -> modI
-            "getc" -> getcI
-            "putc" -> putcI
-            "gets" -> getsI
-            "puts" -> putsI
-            inst | Maybe.isJust . IN.toInt . IN.mk $ inst -> implicitPushI
-            x -> error ("Unknown instruction " ++ x)
+        condNodes <- GMonad.nodesOut (EL.mk "cond") (Maybe.fromJust n)
+        let condValues = map (IN.toFloat . GN.toInst) condNodes
+
+        if (all (\x -> (Maybe.isJust x) && ((/=0) . Maybe.fromJust $ x)) condValues)
+            then case (IN.toString . GN.toInst . Maybe.fromJust $ n) of
+                    "set" -> setI
+                    "new" -> newI
+                    "del" -> delI
+                    "push" -> pushI
+                    "pop" -> popI
+                    "pick" -> pickI
+                    "call" -> callI
+                    "ret" -> retI
+                    "add" -> addI
+                    "mul" -> mulI
+                    "sub" -> subI
+                    "div" -> divI
+                    "mod" -> modI
+                    "getc" -> getcI
+                    "putc" -> putcI
+                    "gets" -> getsI
+                    "puts" -> putsI
+                    inst | Maybe.isJust . IN.toInt . IN.mk $ inst -> implicitPushI
+                    x -> error ("Unknown instruction " ++ x)
+            else GMonad.updateIP
 
         GMonad.nextIP
         interpret
