@@ -1,0 +1,10 @@
+digraph {
+	1 [label="gets"]
+	2 [label="grasp:main"]
+	3 [label="out"]
+	4 [label="thing"]
+
+	1 -> 2 [label="name"]
+	1 -> 3 [label="out"]
+	1 -> 4 [label="label"]
+}

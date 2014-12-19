@@ -1,0 +1,12 @@
+digraph {
+	1 [label="pop"]
+	2 [label="grasp:main"]
+	3 [label="empty"]
+	4 [label="item"]
+	5 [label="out"]
+
+	1 -> 2 [label="name"]
+	1 -> 4 [label="stack"]
+	4 -> 3 [label="next"]
+	1 -> 5 [label="out"]
+}
