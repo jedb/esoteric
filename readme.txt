@@ -1,7 +1,18 @@
 
+List of interpreters:
+    Fractran
+    Thue
+    Unlambda
+    Brainfuck
+    Grasp
+
+
+
+
 Usage of each interpreter is of the form:
 
 <interpreter name> <program file>
+
 
 
 
@@ -16,10 +27,10 @@ The Thue interpreter has several command line switches:
 
 
 
+
 The Grasp interpreter has a command line switch:
 
             --testing   Outputs a before and after of the graph, for debugging
-
 
 
 
