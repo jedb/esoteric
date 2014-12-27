@@ -1,0 +1,257 @@
+digraph {
+    main_1 [label="grasp:main"]
+
+    main_2 [label="call"]
+    main_3 [label="fizzbuzz"]
+    main_4 [label="100"] // must be positive, or infinite loops happen
+
+    main_2 -> main_1 [label="name"]
+    main_2 -> main_3 [label="func"]
+    main_2 -> main_4 [label="in"]
+
+
+
+    // nobody will see this ridiculously wordy implementation
+    // of a ridiculously simple programming task
+
+
+
+    // fizzbuzz function
+    fizzbuzz_n_1 [label="fizzbuzz"]
+
+    // instructions    
+    fizzbuzz_i_1 [label="set"]
+    fizzbuzz_i_2 [label="set"]
+    fizzbuzz_i_3 [label="mod"]
+    fizzbuzz_i_4 [label="mod"]
+    fizzbuzz_i_5 [label="set"]
+    fizzbuzz_i_6 [label="set"]
+    fizzbuzz_i_7 [label="set"]
+    fizzbuzz_i_8 [label="set"]
+    fizzbuzz_i_9 [label="puts"]
+    fizzbuzz_i_10 [label="puts"]
+    fizzbuzz_i_11 [label="del"]
+    fizzbuzz_i_12 [label="call"]
+    fizzbuzz_i_13 [label="puts"]
+    fizzbuzz_i_14 [label="sub"]
+    fizzbuzz_i_15 [label="set"]
+    fizzbuzz_i_16 [label="set"]
+    fizzbuzz_i_17 [label="ret"]
+    fizzbuzz_i_18 [label="add"]
+
+    // variables
+    fizzbuzz_v_1 [label="input"]
+    fizzbuzz_v_2 [label="count"]
+    fizzbuzz_v_3 [label="notby3"]
+    fizzbuzz_v_4 [label="notby5"]
+    fizzbuzz_v_5 [label="by3"]
+    fizzbuzz_v_6 [label="by5"]
+    fizzbuzz_v_7 [label="to-go"]
+    fizzbuzz_v_8 [label="done"]
+
+    // constants
+    fizzbuzz_c_1 [label="0"]
+    fizzbuzz_c_2 [label="1"]
+    fizzbuzz_c_3 [label="3"]
+    fizzbuzz_c_4 [label="5"]
+    fizzbuzz_c_5 [label="int2str"]
+    fizzbuzz_c_6 [label="fizz"]
+    fizzbuzz_c_7 [label="buzz"]
+    fizzbuzz_c_8 [label="in"]
+
+    //edges
+    fizzbuzz_i_1 -> fizzbuzz_n_1 [label="name"]
+    fizzbuzz_i_1 -> fizzbuzz_v_1 [label="out"]
+    fizzbuzz_i_1 -> fizzbuzz_i_2 [label="next"]
+
+    fizzbuzz_i_2 -> fizzbuzz_c_2 [label="in"]
+    fizzbuzz_i_2 -> fizzbuzz_v_2 [label="out"]
+    fizzbuzz_i_2 -> fizzbuzz_i_3 [label="next"]
+
+    fizzbuzz_i_3 -> fizzbuzz_v_2 [label="left"]
+    fizzbuzz_i_3 -> fizzbuzz_c_3 [label="right"]
+    fizzbuzz_i_3 -> fizzbuzz_v_3 [label="out"]
+    fizzbuzz_i_3 -> fizzbuzz_i_4 [label="next"]
+
+    fizzbuzz_i_4 -> fizzbuzz_v_2 [label="left"]
+    fizzbuzz_i_4 -> fizzbuzz_c_4 [label="right"]
+    fizzbuzz_i_4 -> fizzbuzz_v_4 [label="out"]
+    fizzbuzz_i_4 -> fizzbuzz_i_5 [label="next"]
+
+    fizzbuzz_i_5 -> fizzbuzz_c_2 [label="in"]
+    fizzbuzz_i_5 -> fizzbuzz_v_5 [label="out"]
+    fizzbuzz_i_5 -> fizzbuzz_i_6 [label="next"]
+    
+    fizzbuzz_i_6 -> fizzbuzz_c_1 [label="in"]
+    fizzbuzz_i_6 -> fizzbuzz_v_5 [label="out"]
+    fizzbuzz_i_6 -> fizzbuzz_v_3 [label="cond"]
+    fizzbuzz_i_6 -> fizzbuzz_i_7 [label="next"]
+
+    fizzbuzz_i_7 -> fizzbuzz_c_2 [label="in"]
+    fizzbuzz_i_7 -> fizzbuzz_v_6 [label="out"]
+    fizzbuzz_i_7 -> fizzbuzz_i_8 [label="next"]
+
+    fizzbuzz_i_8 -> fizzbuzz_c_1 [label="in"]
+    fizzbuzz_i_8 -> fizzbuzz_v_6 [label="out"]
+    fizzbuzz_i_8 -> fizzbuzz_v_4 [label="cond"]
+    fizzbuzz_i_8 -> fizzbuzz_i_9 [label="next"]
+
+    fizzbuzz_i_9 -> fizzbuzz_c_6 [label="in"]
+    fizzbuzz_i_9 -> fizzbuzz_v_5 [label="cond"]
+    fizzbuzz_i_9 -> fizzbuzz_v_4 [label="nl"]
+    fizzbuzz_i_9 -> fizzbuzz_i_10 [label="next"]
+
+    fizzbuzz_i_10 -> fizzbuzz_c_7 [label="in"]
+    fizzbuzz_i_10 -> fizzbuzz_v_6 [label="cond"]
+    fizzbuzz_i_10 -> fizzbuzz_i_11 [label="next"]
+
+    fizzbuzz_i_11 -> fizzbuzz_i_13 [label="tail"]
+    fizzbuzz_i_11 -> fizzbuzz_c_8 [label="label"]
+    fizzbuzz_i_11 -> fizzbuzz_i_12 [label="next"]
+
+    fizzbuzz_i_12 -> fizzbuzz_v_2 [label="in"]
+    fizzbuzz_i_12 -> fizzbuzz_v_3 [label="cond"]
+    fizzbuzz_i_12 -> fizzbuzz_v_4 [label="cond"]
+    fizzbuzz_i_12 -> fizzbuzz_c_5 [label="func"]
+    fizzbuzz_i_12 -> fizzbuzz_i_13 [label="next"]
+
+    fizzbuzz_i_13 -> fizzbuzz_v_3 [label="cond"]
+    fizzbuzz_i_13 -> fizzbuzz_v_4 [label="cond"]
+    fizzbuzz_i_13 -> fizzbuzz_i_14 [label="next"]
+
+    fizzbuzz_i_14 -> fizzbuzz_v_1 [label="left"]
+    fizzbuzz_i_14 -> fizzbuzz_v_2 [label="right"]
+    fizzbuzz_i_14 -> fizzbuzz_v_7 [label="out"]
+    fizzbuzz_i_14 -> fizzbuzz_i_15 [label="next"]
+
+    fizzbuzz_i_15 -> fizzbuzz_c_2 [label="in"]
+    fizzbuzz_i_15 -> fizzbuzz_v_8 [label="out"]
+    fizzbuzz_i_15 -> fizzbuzz_i_16 [label="next"]
+
+    fizzbuzz_i_16 -> fizzbuzz_c_1 [label="in"]
+    fizzbuzz_i_16 -> fizzbuzz_v_8 [label="out"]
+    fizzbuzz_i_16 -> fizzbuzz_v_7 [label="cond"]
+    fizzbuzz_i_16 -> fizzbuzz_i_17 [label="next"]
+
+    fizzbuzz_i_17 -> fizzbuzz_v_8 [label="cond"]
+    fizzbuzz_i_17 -> fizzbuzz_i_18 [label="next"]
+
+    fizzbuzz_i_18 -> fizzbuzz_c_2 [label="arg"]
+    fizzbuzz_i_18 -> fizzbuzz_v_2 [label="arg"]
+    fizzbuzz_i_18 -> fizzbuzz_v_2 [label="out"]
+    fizzbuzz_i_18 -> fizzbuzz_i_3 [label="next"]
+
+
+
+    // so why am I doing it?
+    // who knows?
+
+
+
+    // int2str function
+    int2str_n_1 [label="int2str"]
+
+    // instructions
+    int2str_i_1 [label="set"]
+    int2str_i_2 [label="mod"]
+    int2str_i_3 [label="set"]
+    int2str_i_4 [label="set"]
+    int2str_i_5 [label="del"]
+    int2str_i_6 [label="new"]
+    int2str_i_7 [label="new"]
+    int2str_i_8 [label="sub"]
+    int2str_i_9 [label="add"]
+    int2str_i_10 [label="push"]
+    int2str_i_11 [label="set"]
+    int2str_i_12 [label="ret"]
+    int2str_i_13 [label="set"]
+    int2str_i_14 [label="mul"]
+    int2str_i_15 [label="mul"]
+
+    // variables
+    int2str_v_1 [label="n"]
+    int2str_v_2 [label="0"] // stack
+    int2str_v_3 [label="10"] // cur_mod
+    int2str_v_4 [label="1"] // cur_sub
+    int2str_v_5 [label="48"] // npos
+    int2str_v_6 [label="notdone"]
+    int2str_v_7 [label="done"]
+
+    // constants
+    int2str_c_1 [label="0"]
+    int2str_c_2 [label="1"]
+    int2str_c_3 [label="10"]
+    int2str_c_4 [label="next"]
+    int2str_c_5 [label="48"] // ascii 0
+
+    // edges
+    int2str_i_1 -> int2str_n_1 [label="name"]
+    int2str_i_1 -> int2str_v_1 [label="out"]
+    int2str_i_1 -> int2str_i_2 [label="next"]
+
+    int2str_i_2 -> int2str_v_1 [label="left"]
+    int2str_i_2 -> int2str_v_3 [label="right"]
+    int2str_i_2 -> int2str_v_6 [label="out"]
+    int2str_i_2 -> int2str_i_3 [label="next"]
+
+    int2str_i_3 -> int2str_c_2 [label="in"]
+    int2str_i_3 -> int2str_v_7 [label="out"]
+    int2str_i_3 -> int2str_i_4 [label="next"]
+
+    int2str_i_4 -> int2str_c_1 [label="in"]
+    int2str_i_4 -> int2str_v_7 [label="out"]
+    int2str_i_4 -> int2str_v_6 [label="cond"]
+    int2str_i_4 -> int2str_i_5 [label="next"]
+
+    int2str_i_5 -> int2str_i_7 [label="tail"]
+    int2str_i_5 -> int2str_c_4 [label="label"]
+    int2str_i_5 -> int2str_i_6 [label="next"]
+
+    int2str_i_6 -> int2str_i_7 [label="tail"]
+    int2str_i_6 -> int2str_i_8 [label="head"]
+    int2str_i_6 -> int2str_c_4 [label="label"]
+    int2str_i_6 -> int2str_v_6 [label="cond"]
+    int2str_i_6 -> int2str_i_7 [label="next"]
+
+    int2str_i_7 -> int2str_i_7 [label="tail"]
+    int2str_i_7 -> int2str_i_10 [label="head"]
+    int2str_i_7 -> int2str_c_4 [label="label"]
+    int2str_i_7 -> int2str_v_7 [label="cond"]
+
+    int2str_i_8 -> int2str_v_1 [label="left"]
+    int2str_i_8 -> int2str_v_4 [label="right"]
+    int2str_i_8 -> int2str_v_1 [label="out"]
+    int2str_i_8 -> int2str_i_9 [label="next"]
+
+    int2str_i_9 -> int2str_v_5 [label="arg"]
+    int2str_i_9 -> int2str_c_2 [label="arg"]
+    int2str_i_9 -> int2str_v_5 [label="out"]
+    int2str_i_9 -> int2str_i_2 [label="next"]
+
+    int2str_i_10 -> int2str_v_2 [label="stack"]
+    int2str_i_10 -> int2str_v_5 [label="in"]
+    int2str_i_10 -> int2str_i_11 [label="next"]
+
+    int2str_i_11 -> int2str_c_1 [label="in"]
+    int2str_i_11 -> int2str_v_7 [label="out"]
+    int2str_i_11 -> int2str_v_1 [label="cond"]
+    int2str_i_11 -> int2str_i_12 [label="next"]
+
+    int2str_i_12 -> int2str_v_2 [label="in"]
+    int2str_i_12 -> int2str_v_7 [label="cond"]
+    int2str_i_12 -> int2str_i_13 [label="next"]
+
+    int2str_i_13 -> int2str_c_5 [label="in"]
+    int2str_i_13 -> int2str_v_5 [label="out"]
+    int2str_i_13 -> int2str_i_14 [label="next"]
+
+    int2str_i_14 -> int2str_c_3 [label="arg"]
+    int2str_i_14 -> int2str_v_3 [label="arg"]
+    int2str_i_14 -> int2str_v_3 [label="out"]
+    int2str_i_14 -> int2str_i_15 [label="next"]
+
+    int2str_i_15 -> int2str_c_3 [label="arg"]
+    int2str_i_15 -> int2str_v_4 [label="arg"]
+    int2str_i_15 -> int2str_v_4 [label="out"]
+    int2str_i_15 -> int2str_i_2 [label="next"]
+}
