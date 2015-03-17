@@ -19,6 +19,7 @@ all: testprog fractranprog thueprog unlambdaprog brainfuckprog graspprog
 clean:
 	find . -name '*.hi' -delete
 	find . -name '*.o' -delete
+	find . -name '*.ali' -delete
 
 distclean:
 	rm ${EXECUTABLES}
